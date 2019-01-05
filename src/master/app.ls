@@ -48,8 +48,9 @@ class Worker
 
   at-bootstrapping-req-configs: (payload) ->
     {master, child, index} = self = @
-    {environment} = master
     configs = lodash.merge {}, master.configs
+    environment = lodash.merge {}, master.environment
+    environment['process_name'] = if index < 10 then "w0#{index}" else "w#{index}"
     child.send create_message STATE_BOOTSTRAPPING, TYPE_BOOTSTRAP_RESPONSE_CONFIGS, {index, environment, configs}
 
 

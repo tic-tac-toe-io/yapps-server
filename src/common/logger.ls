@@ -12,25 +12,38 @@ debug = debug \yapps-server:common:logger
 
 const DEFAULT_PREFIXERS =
   \base : (base) ->
-    {module_name, worker_index} = base
-    return "master:.:#{(path.basename module_name).gray}" unless worker_index >= 0
-    worker_index = "#{worker_index}"
-    return "worker:#{worker_index.cyan}:#{(path.basename module_name).gray}"
+    {process_name, source_type, filename} = base
+    source_type = lodash.padEnd source_type, 12
+    # filename = lodash.padEnd filename, 28
+    return "#{process_name.cyan}:#{source_type}:#{filename.gray}"
 
 
 class ModuleLogger
-  (@parent, @worker_index, @module_name) ->
-    @logger = @parent.child base: {module_name, worker_index}
+  (@filepath) ->
+    {index, environment, logger} = module
+    {process_name, current_dir} = environment
+    dir = path.dirname path.dirname __dirname
+    if filepath.startsWith current_dir
+      source_type = "--app--"
+      filename = filepath.substring current_dir.length
+      # filename = filename.substring 1 if filename.startsWith "/"
+    else if filepath.startsWith dir
+      source_type = "yapps-server"
+      filename = filepath.substring dir.length
+      # filename = filename.substring 1 if filename.startsWith "/"
+    else
+      source_type = "NONE"
+      filename = filepath
+    @log = logger.child base: {process_name, source_type, filename}
 
-  error: -> return @logger.error.apply @logger, arguments
-  warn : -> return @logger.warn.apply  @logger, arguments
-  info : -> return @logger.info.apply  @logger, arguments
-  debug: -> return @logger.debug.apply @logger, arguments
+  error: -> return @log.error.apply @log, arguments
+  warn : -> return @log.warn.apply  @log, arguments
+  info : -> return @log.info.apply  @log, arguments
+  debug: -> return @log.debug.apply @log, arguments
 
 
-GET_LOGGER = (filename) ->
-  {worker_index} = module
-  logger = new ModuleLogger module.logger, worker_index, filename
+GET_LOGGER = (filepath) ->
+  logger = new ModuleLogger filepath
   produce_func = (logger, level) -> return -> logger[level].apply logger, arguments
   return do
     logger: logger.stream
@@ -42,15 +55,15 @@ GET_LOGGER = (filename) ->
 
 module.exports = exports =
   init: (index, environment, configs, prefixers, stringifiers, done) ->
-    {app_name, current_dir, work_dir, logs_dir, startup_time} = environment
+    {app_name, process_name, current_dir, work_dir, logs_dir, startup_time, verbose} = environment
     debug "index: %o", index
     debug "environment: %o", environment
     debug "configs: %o", configs
+    debug "process_name: %o", process_name
     prefixers = lodash.merge {}, DEFAULT_PREFIXERS, prefixers
     stringifiers = lodash.merge {}, stringifiers
-    module.worker_index = index
-    process_name = if index < 0 then "m0" else "w#{index}"
-    debug "process_name: %o", process_name
+    module.environment = environment
+    module.index = index
     logging_dir = "#{logs_dir}/#{startup_time}"
     debug "logging_dir: %o", logging_dir
     (mkdirp-err) <- mkdirp logging_dir
@@ -60,7 +73,7 @@ module.exports = exports =
     {serializers} = bunyan-debug-stream
     opts = {name, streams, serializers}
     opts.streams.push do
-      level: \info
+      level: if verbose then \debug else \info
       type: \raw
       stream: bunyan-debug-stream do
         out: process.stderr

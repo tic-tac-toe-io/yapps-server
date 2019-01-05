@@ -56,10 +56,7 @@ class WorkerLoader
     (init-err) <- app.init
     return init-callback init-err if init-err?
     logger = get-module-logger process.argv[1]
-    debug "init-callback: %o", typeof init-callback
     return init-callback null, app, logger
-
-
 
 
 

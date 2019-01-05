@@ -37,6 +37,9 @@ class MasterLoader
       .alias \c, \config
       .describe \c, "configuration file to be loaded"
       .default \c, null
+      .alias \v, \verbose
+      .describe \v, "enable verbose messages"
+      .default \v, no
       .alias \h, \help
       .boolean \h
       .demand <[w]>
@@ -45,7 +48,7 @@ class MasterLoader
         hello
       """
       .argv
-    {workers, config} = argv
+    {workers, config, verbose} = argv
     args = argv._
     debug "cmdline:_: %o", args
     args = [] unless args?
@@ -54,7 +57,8 @@ class MasterLoader
     debug "cmdline:config: %o", config
     debug "cmdline:-: %o", argv._
     debug "args: %o", args
-    num = self.num_of_workers = parseInt workers
+    self.verbose = self.environment['verbose'] = verbose
+    self.num_of_workers = num = parseInt workers
     throw new Error "invalid worker option: #{workers}" if num === NaN
     debug "num_of_workers: %d", num
     args = minimist args
@@ -74,6 +78,7 @@ class MasterLoader
       current_dir = path.dirname process.argv[1]
       current_dir = path.dirname current_dir unless entry in <[app.ls index.js]>
     app_name = path.basename path.dirname process.argv[1]
+    process_name = "mst"
     debug "app_name: %o", app_name
     work_dir = "#{current_dir}/work" unless work_dir?
     logs_dir = "#{current_dir}/logs" unless logs_dir?
@@ -84,12 +89,12 @@ class MasterLoader
     debug "month: %d", month
     month = if month < 10 then "0#{month}" else month.toString!
     startup_time = "#{year}#{month}"
-    environment = self.environment = {app_name, current_dir, work_dir, logs_dir, startup_time}
+    environment = self.environment = {app_name, process_name, current_dir, work_dir, logs_dir, startup_time}
     debug "environment: %o", environment
     return environment
 
   init: (done) ->
-    {environment, configs, num_of_workers} = self = @
+    {environment, configs, num_of_workers, verbose} = self = @
     logger = require \../common/logger
     (logger-err, get-module-logger) <- logger.init -1, environment, configs['logger'], {}, {}
     return done logger-err if logger-err?
