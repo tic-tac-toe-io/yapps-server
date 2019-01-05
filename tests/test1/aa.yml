@@ -1,0 +1,3 @@
+web:
+  port: 7000
+  upload_storage: "memory"       # either `memory` or `filesystem`.
