@@ -8,8 +8,58 @@
 # ---- MASTER ----
 #
 require! <[path]>
-require! <[rc debug js-yaml minimist lodash]>
+require! <[colors rc debug js-yaml minimist lodash yargs]>
 debug = debug \yapps-server:master:loader
+
+const cwd = process.cwd!
+const app_entry = process.argv[1]
+const app_dir = path.dirname app_entry
+const app_name = path.basename app_dir
+const app_entry_short = if app_entry.startsWith cwd then ".#{app_entry.substring cwd.length}" else app_entry
+
+const CMD1 = "node #{app_entry_short} -w 2"
+const CMD2 = "node #{app_entry_short} -w $(nproc) -c /etc/#{app_name}/#{app_name}.yml"
+const CMD3 = "node #{app_entry_short} -w $(nproc) -- --web.port=3000 --web.upload_storage=file"
+const CMD4 = "DEBUG=yapps-server:* node #{app_entry_short} -w $(nproc)"
+const JSON1 = "{ web: { port: 3001, upload_storage: 'file' } }"
+
+argv = yargs
+  .alias \w, \workers
+  .describe \w, "the number of workers to serve"
+  .alias \c, \config
+  .describe \c, "configuration file to be loaded"
+  .default \c, null
+  .alias \v, \verbose
+  .describe \v, "enable verbose messages"
+  .default \v, no
+  .alias \h, \help
+  .boolean \h
+  .demand <[w]>
+  .help!
+  .epilogue """
+    Examples:
+      1. Run #{app_name.cyan} with 2 worker processes and .#{app_name}rc as config
+          #{CMD1.green}
+
+      2. Run #{app_name.cyan} with all cpu cores, and use a YAML config file in `/etc/#{app_name}`
+          #{CMD2.green}
+
+      3. Run #{app_name.cyan} with all cpu cores, and change web port to 3000.
+          #{CMD3.green}
+
+      4. Run #{app_name.cyan} with all cpu cores, and enable debug messages for bootstrap phase
+          #{CMD4.green}
+
+    Please note, Use `--` to stop parsing flags, and treat rest arguments as patches
+    to be applied to the YAML configuration file loaded by the module `rc`. Those
+    patch arguments support dot notation to build an object for applying patch.
+    For example, following startup command:
+
+      #{CMD3.gray}
+
+    It composes a JSON object #{JSON1.yellow}, and patched to the loaded YAML configuration file.
+  """
+  .argv
 
 
 YAML_PARSE = (document) ->
@@ -19,40 +69,16 @@ YAML_PARSE = (document) ->
 class MasterLoader
   (@opts) ->
     self = @
-    {app_name} = self.init_env!
-    {args} = self.init_cmdline_args!
-    defaults = require \../common/defaults
-    debug "opts: %o", opts
-    defaults = lodash.merge {}, defaults, opts.defaults
-    debug "defaults: %o", defaults
-    configs = self.configs = rc app_name, defaults, args, YAML_PARSE
-    debug "configs: %o", configs
+    self.init_env!
+    self.init_cmdline_args!
 
   init_cmdline_args: ->
     self = @
     debug "process:argv %o", process.argv
-    argv = require \yargs
-      .alias \w, \workers
-      .describe \w, "the number of workers to serve"
-      .alias \c, \config
-      .describe \c, "configuration file to be loaded"
-      .default \c, null
-      .alias \v, \verbose
-      .describe \v, "enable verbose messages"
-      .default \v, no
-      .alias \h, \help
-      .boolean \h
-      .demand <[w]>
-      .help!
-      .epilogue """
-        hello
-      """
-      .argv
     {workers, config, verbose} = argv
-    args = argv._
+    args = argv._  # the arguments after `--`
     debug "cmdline:_: %o", args
     args = [] unless args?
-    args = args ++ ["--config", config] if config?
     debug "cmdline:workers: %o", workers
     debug "cmdline:config: %o", config
     debug "cmdline:-: %o", argv._
@@ -61,8 +87,17 @@ class MasterLoader
     self.num_of_workers = num = parseInt workers
     throw new Error "invalid worker option: #{workers}" if num === NaN
     debug "num_of_workers: %d", num
-    args = minimist args
-    return {args}
+    defaults = require \../common/defaults
+    debug "defaults: %o", defaults
+    overrides = minimist args
+    delete overrides['_']
+    debug "overrides: %o", overrides
+    rcargs = if config? then ["--config", config] else []
+    rcargs = minimist rcargs
+    debug "rcargs: %o", rcargs
+    configs = self.configs = lodash.merge {}, (rc app_name, defaults, rcargs, YAML_PARSE), overrides
+    debug "configs: %o", configs
+
 
   init_env: (current_dir=null, work_dir=null, log_dir=null)->
     self = @
@@ -77,7 +112,6 @@ class MasterLoader
       #
       current_dir = path.dirname process.argv[1]
       current_dir = path.dirname current_dir unless entry in <[app.ls index.js]>
-    app_name = path.basename path.dirname process.argv[1]
     process_name = "mst"
     debug "app_name: %o", app_name
     work_dir = "#{current_dir}/work" unless work_dir?

@@ -2,13 +2,7 @@
 'use strict';
 
 var opts = {
-    plugins: [],
-    defaults: {
-        aaa: true,
-        bbb: 2,
-        ccc: "abc",
-        ddd: ["1", "2", "3"]
-    }
+    plugins: []
 };
 
 var ys = require('yapps-server')(opts, (err, app, logger) => {

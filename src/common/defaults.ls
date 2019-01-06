@@ -1,7 +1,22 @@
+
+#
+# Predefined variables for configuration file:
+#
+#   - app_name
+#   - process_name => m0, w0, w1, w2, w3...
+#   - current_dir
+#   - work_dir
+#   - logs_dir
+#   - startup_time
+#
+
+
 const opts =
   web:
     port: 3000
+    api: 3
     upload_storage: \memory
+    upload_path: "{{work_dir}}/web/upload/{{wid}}"
 
   logger:
     rotating_file_stream:
