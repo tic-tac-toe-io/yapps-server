@@ -21,11 +21,11 @@ const DEFAULT_PREFIXERS =
 class ModuleLogger
   (@filepath) ->
     {index, environment, logger} = module
-    {process_name, current_dir} = environment
+    {process_name, app_dir} = environment
     dir = path.dirname path.dirname __dirname
-    if filepath.startsWith current_dir
+    if filepath.startsWith app_dir
       source_type = "--app--"
-      filename = filepath.substring current_dir.length
+      filename = filepath.substring app_dir.length
       # filename = filename.substring 1 if filename.startsWith "/"
     else if filepath.startsWith dir
       source_type = "yapps-server"
@@ -55,7 +55,7 @@ GET_LOGGER = (filepath) ->
 
 module.exports = exports =
   init: (index, environment, configs, prefixers, stringifiers, done) ->
-    {app_name, process_name, current_dir, work_dir, logs_dir, startup_time, verbose} = environment
+    {app_name, process_name, app_dir, work_dir, logs_dir, startup_time, verbose} = environment
     debug "index: %o", index
     debug "environment: %o", environment
     debug "configs: %o", configs
@@ -77,7 +77,7 @@ module.exports = exports =
       type: \raw
       stream: bunyan-debug-stream do
         out: process.stderr
-        basepath: current_dir
+        basepath: app_dir
         forceColor: yes
         showProcess: no
         showDate: (time) -> return time.toISOString!.substring 2

@@ -3,8 +3,8 @@
 # Predefined variables for configuration file:
 #
 #   - app_name
-#   - process_name => m0, w0, w1, w2, w3...
-#   - current_dir
+#   - process_name => mst, w00, w01, w02, w03...
+#   - app_dir
 #   - work_dir
 #   - logs_dir
 #   - startup_time
@@ -24,5 +24,4 @@ const opts =
       threshold: \1g    # The maximum size for a log file to reach before it's rotated.
       totalFiles: 60    # Keep 60 days (2 months) of log files.
 
-console.log "opts => #{JSON.stringify opts}"
 module.exports = exports = opts

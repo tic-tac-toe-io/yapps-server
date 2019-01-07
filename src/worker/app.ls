@@ -20,7 +20,8 @@ require! <[async]>
 class WorkerApp
   # environment
   #   - app_name
-  #   - current_dir
+  #   - process_name
+  #   - app_dir
   #   - work_dir
   #   - logs_dir
   #   - startup_time

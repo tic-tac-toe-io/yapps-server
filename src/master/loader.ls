@@ -9,6 +9,8 @@
 #
 require! <[path]>
 require! <[colors rc debug js-yaml minimist lodash yargs]>
+{COLORIZED, PRETTIZE_KVS, PRINT_PRETTY_JSON} = require \../helpers/utils
+
 debug = debug \yapps-server:master:loader
 
 const cwd = process.cwd!
@@ -96,26 +98,21 @@ class MasterLoader
     rcargs = minimist rcargs
     debug "rcargs: %o", rcargs
     configs = self.configs = lodash.merge {}, (rc app_name, defaults, rcargs, YAML_PARSE), overrides
-    debug "configs: %o", configs
+    # debug "configs: %o", configs
+    {config} = configs
+    delete configs['config']
+    delete configs['configs']
+    delete configs['_']
+    PRINT_PRETTY_JSON config, configs
 
-
-  init_env: (current_dir=null, work_dir=null, log_dir=null)->
+  init_env: (work_dir=null, log_dir=null)->
     self = @
     entry = path.basename process.argv[1]
     debug "entry: %o", entry
-    if not current_dir?
-      # When the entry script is /xxx/sensor-hub/app.ls, then
-      # use `/xxx/sensor-hub` as working directory.
-      #
-      # When the entry script is /xxx/sensor-hub/app/index.js (or index.raw.js),
-      # then still use `/xxx/sensor-hub` as working directory.
-      #
-      current_dir = path.dirname process.argv[1]
-      current_dir = path.dirname current_dir unless entry in <[app.ls index.js]>
     process_name = "mst"
     debug "app_name: %o", app_name
-    work_dir = "#{current_dir}/work" unless work_dir?
-    logs_dir = "#{current_dir}/logs" unless logs_dir?
+    work_dir = "#{app_dir}/work" unless work_dir?
+    logs_dir = "#{app_dir}/logs" unless logs_dir?
     now = new Date!
     year = now.getFullYear!
     month = now.getMonth! + 1
@@ -123,7 +120,7 @@ class MasterLoader
     debug "month: %d", month
     month = if month < 10 then "0#{month}" else month.toString!
     startup_time = "#{year}#{month}"
-    environment = self.environment = {app_name, process_name, current_dir, work_dir, logs_dir, startup_time}
+    environment = self.environment = {app_name, process_name, app_dir, work_dir, logs_dir, startup_time}
     debug "environment: %o", environment
     return environment
 
@@ -145,6 +142,7 @@ class MasterLoader
 module.exports = exports = (opts, done) ->
   {loader} = module
   return done "disallow to create duplicated instance of yapps-server(master)" if loader?
+  console.log "bootstrapping yapps-server ..."
   loader = module.loader = new MasterLoader opts
   return loader.init done
 
