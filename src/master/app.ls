@@ -13,6 +13,7 @@ require! <[async lodash]>
 {services} = global.yac
 {DBG, ERR, WARN, INFO} = services.get_module_logger __filename
 
+BaseApp = require \../common/baseapp
 {create_message, message_states, message_types} = require \../common/message
 {STATE_BOOTSTRAPPING, STATE_READY} = message_states
 {TYPE_BOOTSTRAP_REQUEST_CONFIGS, TYPE_BOOTSTRAP_RESPONSE_CONFIGS} = message_types
@@ -48,13 +49,14 @@ class Worker
 
   at-bootstrapping-req-configs: (payload) ->
     {master, child, index} = self = @
-    configs = lodash.merge {}, master.configs
+    templated_configs = lodash.merge {}, master.templated_configs
     environment = lodash.merge {}, master.environment
     environment['process_name'] = if index < 10 then "w0#{index}" else "w#{index}"
-    child.send create_message STATE_BOOTSTRAPPING, TYPE_BOOTSTRAP_RESPONSE_CONFIGS, {index, environment, configs}
+    child.send create_message STATE_BOOTSTRAPPING, TYPE_BOOTSTRAP_RESPONSE_CONFIGS, {index, environment, templated_configs}
 
 
-class MasterApp
+class MasterApp extends BaseApp
+  #
   # environment
   #   - app_name
   #   - process_name
@@ -63,18 +65,20 @@ class MasterApp
   #   - logs_dir
   #   - startup_time
   #
-  # configs
-  #   - load from YAML config file, and merged with command-line options after `--`
+  # templated_configs
+  #   - load from YAML config file, and merged with command-line options after `--` (support nested json object with dot notation)
+  #   - default values are loaded from yapps-server/src/common/defaults.ls
+  #   - those handlebar variables (e.g. `{{work_dir}}`) are still kept
   #
-  (@environment, @configs, @num_of_workers) ->
+  # configs:
+  #   - merged configurations, no handlebars variables
+  #
+  (@environment, @templated_configs, @num_of_workers) ->
+    super ...
     @workers = []
-    return
 
-  spawn-worker: (index, done) ->
-    return
-
-  init: (done) ->
-    {environment, configs, num_of_workers} = self = @
+  init-internally: (environment, configs, done) ->
+    {num_of_workers} = self = @
     self.workers = [ (new Worker self, i) for i from 0 to (num_of_workers-1) ]
     return done!
 

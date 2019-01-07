@@ -16,8 +16,12 @@ const opts =
     port: 3000
     api: 3
     upload_storage: \memory
-    upload_path: "{{work_dir}}/web/upload/{{wid}}"
+    upload_path: "{{work_dir}}/web/upload/{{process_name}}"
 
+  #
+  # DO NOT USE any handlebars template variables (e.g. process_name) in logger
+  # section because they are never merged.
+  #
   logger:
     rotating_file_stream:
       period: \daily

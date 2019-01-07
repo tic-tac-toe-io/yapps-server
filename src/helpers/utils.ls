@@ -1,4 +1,4 @@
-require! <[colors prettyjson]>
+require! <[colors prettyjson handlebars]>
 
 COLORIZED = (v) ->
   t = typeof v
@@ -28,4 +28,11 @@ PRINT_PRETTY_JSON = (name, config, idents=1, output=console.error) ->
   [ output "#{tabs}#{x}" for x in xs ]
   output ""
 
-module.exports = exports = {COLORIZED, PRETTIZE_KVS, PRINT_PRETTY_JSON}
+MERGE_JSON_TEMPLATE = (json, context) ->
+  text = JSON.stringify json
+  template = handlebars.compile text
+  text = template context
+  return JSON.parse text
+
+
+module.exports = exports = {COLORIZED, PRETTIZE_KVS, PRINT_PRETTY_JSON, MERGE_JSON_TEMPLATE}

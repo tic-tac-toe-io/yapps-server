@@ -97,13 +97,13 @@ class MasterLoader
     rcargs = if config? then ["--config", config] else []
     rcargs = minimist rcargs
     debug "rcargs: %o", rcargs
-    configs = self.configs = lodash.merge {}, (rc app_name, defaults, rcargs, YAML_PARSE), overrides
-    # debug "configs: %o", configs
-    {config} = configs
-    delete configs['config']
-    delete configs['configs']
-    delete configs['_']
-    PRINT_PRETTY_JSON config, configs
+    self.templated_configs = templated_configs = lodash.merge {}, (rc app_name, defaults, rcargs, YAML_PARSE), overrides
+    filepath = templated_configs['config']
+    delete templated_configs['config']
+    delete templated_configs['configs']
+    delete templated_configs['_']
+    debug "templated_configs from %s", filepath
+    debug "templated_configs: %o", templated_configs
 
   init_env: (work_dir=null, log_dir=null)->
     self = @
@@ -125,14 +125,14 @@ class MasterLoader
     return environment
 
   init: (done) ->
-    {environment, configs, num_of_workers, verbose} = self = @
+    {environment, templated_configs, num_of_workers, verbose} = self = @
     logger = require \../common/logger
-    (logger-err, get-module-logger) <- logger.init -1, environment, configs['logger'], {}, {}
+    (logger-err, get-module-logger) <- logger.init -1, environment, templated_configs['logger'], {}, {}
     return done logger-err if logger-err?
     {services} = global.yac
     services.get_module_logger = get-module-logger
     MasterApp = require \./app
-    app = self.app = new MasterApp environment, configs, num_of_workers
+    app = self.app = new MasterApp environment, templated_configs, num_of_workers
     (init-err) <- app.init
     return done init-err if init-err?
     logger = get-module-logger process.argv[1]

@@ -13,28 +13,19 @@ require! <[async]>
 {services} = global.yac
 {DBG, ERR, WARN, INFO} = services.get_module_logger __filename
 
+{COLORIZED, PRETTIZE_KVS, PRINT_PRETTY_JSON, MERGE_JSON_TEMPLATE} = require \../helpers/utils
+BaseApp = require \../common/baseapp
 {create_message, message_states, message_types} = require \../common/message
 {STATE_BOOTSTRAPPING, STATE_READY} = message_states
 
 
-class WorkerApp
-  # environment
-  #   - app_name
-  #   - process_name
-  #   - app_dir
-  #   - work_dir
-  #   - logs_dir
-  #   - startup_time
-  #
-  # configs
-  #   - load from YAML config file, and merged with command-line options after `--`
-  #
-  (@environment, @configs) ->
-    return
+class WorkerApp extends BaseApp
+  (@environment, @templated_configs) ->
+    super ...
 
-  init: (done) ->
-    {environment, configs} = self = @
-    INFO "init."
+  init-internally: (environment, configs, done) ->
+    self = @
+    INFO "init-internally: configs => #{JSON.stringify configs}"
     return done!
 
   at-message: (message, connection) ->
