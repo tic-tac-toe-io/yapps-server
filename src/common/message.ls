@@ -4,15 +4,19 @@
 # https://tic-tac-toe.io
 # Taipei, Taiwan
 #
-const STATE_BOOTSTRAPPING = \bootstrap
+const STATE_BOOTSTRAPPING = \bootstrapping
+const STATE_BOOTSTRAPPED = \bootstrapped
 const STATE_READY = \ready
 const STATE_RUNNING = \running
 
+const TYPE_NONE = \none
 const TYPE_BOOTSTRAP_REQUEST_CONFIGS = \req-worker-configs
 const TYPE_BOOTSTRAP_RESPONSE_CONFIGS = \rsp-worker-configs
 
+
 const message_states = {
   STATE_BOOTSTRAPPING,
+  STATE_BOOTSTRAPPED,
   STATE_READY,
   STATE_RUNNING
 }
@@ -22,7 +26,7 @@ const message_types = {
   TYPE_BOOTSTRAP_RESPONSE_CONFIGS
 }
 
-create_message = (state, type, payload={}) ->
+create_message = (state, type=TYPE_NONE, payload={}) ->
   return {state, type, payload}
 
 

@@ -15,13 +15,14 @@ require! <[async lodash]>
 
 BaseApp = require \../common/baseapp
 {create_message, message_states, message_types} = require \../common/message
-{STATE_BOOTSTRAPPING, STATE_READY} = message_states
+{STATE_BOOTSTRAPPING, STATE_BOOTSTRAPPED, STATE_READY} = message_states
 {TYPE_BOOTSTRAP_REQUEST_CONFIGS, TYPE_BOOTSTRAP_RESPONSE_CONFIGS} = message_types
 
 
 class Worker
   (@master, @index) ->
     self = @
+    self.bootstrapped = no
     self.ready = no
     child = self.child = cluster.fork!
     pid = self.pid = child.process.pid
@@ -42,6 +43,7 @@ class Worker
     {index, prefix} = self = @
     INFO "#{prefix}: got-a-message => #{JSON.stringify message}"
     {state, type, payload} = message
+    return self.at-bootstrapped! if state is STATE_BOOTSTRAPPED
     return self.at-bootstrapping-message type, payload if state is STATE_BOOTSTRAPPING
 
   at-bootstrapping-message: (type, payload) ->
@@ -53,6 +55,11 @@ class Worker
     environment = lodash.merge {}, master.environment
     environment['process_name'] = if index < 10 then "w0#{index}" else "w#{index}"
     child.send create_message STATE_BOOTSTRAPPING, TYPE_BOOTSTRAP_RESPONSE_CONFIGS, {index, environment, templated_configs}
+
+  at-bootstrapped: ->
+    {master, index} = self = @
+    self.bootstrapped = yes
+    master.at-bootstrapped self, index
 
 
 class MasterApp extends BaseApp
@@ -74,17 +81,29 @@ class MasterApp extends BaseApp
   #   - merged configurations, no handlebars variables
   #
   (@environment, @templated_configs, @num_of_workers) ->
-    super ...
+    super environment, templated_configs, yes
     @workers = []
+    @bootstrapped = no
+    @bootstrap-callback = null
 
   init-internally: (environment, configs, done) ->
     {num_of_workers} = self = @
+    self.bootstrap-callback = done
     self.workers = [ (new Worker self, i) for i from 0 to (num_of_workers-1) ]
-    return done!
 
   at-child-exit: (index, code, signal) ->
     {workers} = self = @
     workers[index] = new Worker self, index
+
+  at-bootstrapped: (worker, index) ->
+    {workers, bootstrapped, bootstrap-callback} = self = @
+    return if bootstrapped
+    xs = [ (if w.bootstrapped then 1 else 0) for w in workers ]
+    xs = lodash.sum xs
+    return unless xs is workers.length
+    self.bootstrap-callback = null
+    self.bootstrapped = yes
+    return bootstrap-callback!
 
 
 module.exports = exports = MasterApp

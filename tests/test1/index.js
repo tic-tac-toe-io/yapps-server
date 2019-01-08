@@ -28,11 +28,35 @@ var ys = require('yapps-server')(opts, (berr, app, logger) => {
     WARN("at bootstrapping");
     ERR("at bootstrapping");
 
-    app.start((serr) => {
-        if (serr) {
-            console.error(`failed to start web service`, serr);
-            return;
-        }
-        INFO("ready.");
-    });
+    if (app.is_master) {
+        /**
+         * Configure master app here.
+         */
+        // app.addPlugin()
+        // app.addPlugin()
+
+        /**
+         * Start service in the process of master app.
+         */
+        app.start((serr) => {
+            if (serr) {
+                ERR(serr, "failed to start service...");
+                return process.exit(1);
+            }
+            INFO("ready.");
+        });
+    }
+    else {
+        /**
+         * Configure worker app here...
+         */
+        // app.addPlugin()
+        // app.addPlugin()
+
+        /**
+         * Inform master process that worker process is fully configured, and
+         * waiting to start service...
+         */
+        app.start(null);
+    }
 });

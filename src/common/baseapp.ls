@@ -28,7 +28,7 @@ class BaseApp
   #   - the section `logger` is not in the templated_configs
   #
   #
-  (@environment, @templated_configs) ->
+  (@environment, @templated_configs, @is_master=no) ->
     return
 
   init-internally: (environment, configs, done) ->
