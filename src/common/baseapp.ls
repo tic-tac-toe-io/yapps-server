@@ -42,5 +42,8 @@ class BaseApp
       return done error
     return @.init-internally environment, configs, done
 
+  start: (done) ->
+    return done!
+
 
 module.exports = exports = BaseApp
