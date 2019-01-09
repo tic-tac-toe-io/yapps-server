@@ -53,13 +53,13 @@ module.exports = exports =
   lookup: (m) ->
     result = FIND_MODULE m
     return null unless result?
-    {name, parent} = result
+    {req, parent} = result
     sm = FIND_MODULE_FROM_SYSTEM m
     {id, filename} = sm
     filepath = filename
-    return {name, filepath}
+    return {req, id, filepath}
 
-  add-reference: (m, name, parent) ->
+  add-reference: (m, req, parent) ->
     {loaded-modules} = module
-    loaded-modules.push {m, name, parent}
+    loaded-modules.push {m, req, parent}
     return m

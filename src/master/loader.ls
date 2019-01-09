@@ -129,7 +129,7 @@ class MasterLoader
     logger = require \../common/logger
     (logger-err, get-module-logger) <- logger.init -1, environment, templated_configs['logger'], {}, {}
     return done logger-err if logger-err?
-    {services} = global.yac
+    {services} = global.ys
     services.get_module_logger = get-module-logger
     MasterApp = require \./app
     app = self.app = new MasterApp environment, templated_configs, num_of_workers

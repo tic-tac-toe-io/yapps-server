@@ -22,7 +22,7 @@ BOOTSTRAP = (m) ->
   #
   # Initialize the context of yapps-server, including 1 field: services
   services = {}
-  global.yac = {services}
+  global.ys = {services}
   #
   # Use `loader` module to load App for master process and worker process(es)
   return DELEGATE_EXPORT m

@@ -10,13 +10,14 @@
 require! <[path cluster]>
 require! <[async lodash]>
 
-{services} = global.yac
+{services} = global.ys
 {DBG, ERR, WARN, INFO} = services.get_module_logger __filename
 
-BaseApp = require \../common/baseapp
+{BaseApp} = require \../common/baseapp
 {create_message, message_states, message_types} = require \../common/message
 {STATE_BOOTSTRAPPING, STATE_BOOTSTRAPPED, STATE_READY} = message_states
 {TYPE_BOOTSTRAP_REQUEST_CONFIGS, TYPE_BOOTSTRAP_RESPONSE_CONFIGS} = message_types
+
 
 
 class Worker
@@ -51,10 +52,12 @@ class Worker
 
   at-bootstrapping-req-configs: (payload) ->
     {master, child, index} = self = @
+    {context} = master
     templated_configs = lodash.merge {}, master.templated_configs
+    master_context = context.to-json yes
     environment = lodash.merge {}, master.environment
     environment['process_name'] = if index < 10 then "w0#{index}" else "w#{index}"
-    child.send create_message STATE_BOOTSTRAPPING, TYPE_BOOTSTRAP_RESPONSE_CONFIGS, {index, environment, templated_configs}
+    child.send create_message STATE_BOOTSTRAPPING, TYPE_BOOTSTRAP_RESPONSE_CONFIGS, {index, environment, templated_configs, master_context}
 
   at-bootstrapped: ->
     {master, index} = self = @
@@ -77,39 +80,47 @@ class MasterApp extends BaseApp
   #   - default values are loaded from yapps-server/src/common/defaults.ls
   #   - those handlebar variables (e.g. `{{work_dir}}`) are still kept
   #
-  # configs:
-  #   - merged configurations, no handlebars variables
-  #
   (@environment, @templated_configs, @num_of_workers) ->
-    super environment, templated_configs, yes
+    super environment, templated_configs
     @workers = []
     @bootstrapped = no
-    @bootstrap-callback = null
+    @started = no
+    @start-callback = null
 
   init-internally: (environment, configs, done) ->
-    {num_of_workers} = self = @
-    # self.bootstrap-callback = done
-    # self.workers = [ (new Worker self, i) for i from 0 to (num_of_workers-1) ]
-    hook = self.module-hook = require \./require-hook
-    hook.install!
     return done!
 
-  add-plugin: (p) ->
-    return
+  add-plugin: (m) ->
+    {context} = self = @
+    p = context.create-plugin m
+    mm = m['master']
+    return context.add-plugin p.set-callee! unless mm?
+    throw new Error "add-plugin: m[master].attach() shall not be null" unless mm.attach?
+    throw new Error "add-plugin: m[master].attach() shall be function but #{typeof mm.attach}" unless \function is typeof mm.attach
+    throw new Error "add-plugin: m[master].init() shall not be null" unless mm.init?
+    throw new Error "add-plugin: m[master].init() shall be function but #{typeof mm.init}" unless \function is typeof mm.init
+    return context.add-plugin p.set-callee mm
 
   at-child-exit: (index, code, signal) ->
     {workers} = self = @
     workers[index] = new Worker self, index
 
   at-bootstrapped: (worker, index) ->
-    {workers, bootstrapped, bootstrap-callback} = self = @
+    {workers, bootstrapped} = self = @
     return if bootstrapped
     xs = [ (if w.bootstrapped then 1 else 0) for w in workers ]
     xs = lodash.sum xs
     return unless xs is workers.length
-    self.bootstrap-callback = null
     self.bootstrapped = yes
-    return bootstrap-callback!
+    return self.at-all-bootstrapped!
+
+  at-all-bootstrapped: ->
+    return
+
+  start: (done) ->
+    {num_of_workers} = self = @
+    self.start-callback = done
+    self.workers = [ (new Worker self, i) for i from 0 to (num_of_workers-1) ]
 
 
 module.exports = exports = MasterApp
