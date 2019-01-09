@@ -5,11 +5,28 @@ const opts = {
     manifest: {}
 };
 
-/**
- * Write codes here before bootstrapping yapps-server module.
- */
+// Write codes here before bootstrapping yapps-server module.
+//
+var ys = require('yapps-server');
 
-var ys = require('yapps-server')(opts, (berr, app, logger) => {
+/**
+ * The entire startup process of a typical application based
+ * on yapps-server (YS): 
+ * 
+ * 1. master process calls YS.bootstrap() with designated options
+ * 2. master process adds plugins to yapps-server in the callback of bootstrap
+ * 3. master process calls YS.start() to start load-balance service
+ * 4. master process forks several worker processes
+ * 5. each worker process calls YS.bootstrap() with designated options
+ * 6. each worker process add express/socket.io middlewares in the callback 
+ *    of bootstrap
+ * 7. each worker process calls YS.start() and starts express web server
+ *    to listen 0.0.0.0:0
+ * 8. each worker process informs master process it's ready
+ * 9. master process starts to listen a port, and dispatch incoming connections
+ *    to each worker process by considering their loads
+ */
+ys.bootstrap(opts, (berr, logger, master=null, web=null) => {
     if (berr) {
         console.error(`failed to bootstrap yapps-server, ${berr}`);
         process.exit(1);
@@ -28,17 +45,16 @@ var ys = require('yapps-server')(opts, (berr, app, logger) => {
     WARN("at bootstrapping");
     ERR("at bootstrapping");
 
-    if (app.is_master) {
+    if (master) {
         /**
-         * Configure master app here.
+         * Configure master app (load-balancer) here.
          */
-        // app.addPlugin()
-        // app.addPlugin()
-
+        master.addPlugin(require('./lib/test-plugin1'));
+        master.addPlugin(require('echo1'));
         /**
          * Start service in the process of master app.
          */
-        app.start((serr) => {
+        master.start((serr) => {
             if (serr) {
                 ERR(serr, "failed to start service...");
                 return process.exit(1);
@@ -48,15 +64,14 @@ var ys = require('yapps-server')(opts, (berr, app, logger) => {
     }
     else {
         /**
-         * Configure worker app here...
+         * Configure worker app (web) here...
          */
-        // app.addPlugin()
-        // app.addPlugin()
+        
 
         /**
          * Inform master process that worker process is fully configured, and
          * waiting to start service...
          */
-        app.start(null);
+        web.start(null);
     }
 });

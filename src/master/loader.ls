@@ -136,7 +136,7 @@ class MasterLoader
     (init-err) <- app.init
     return done init-err if init-err?
     logger = get-module-logger process.argv[1]
-    return done null, app, logger
+    return done null, logger, app, null
 
 
 module.exports = exports = (opts, done) ->

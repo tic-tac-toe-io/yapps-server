@@ -52,10 +52,10 @@ class WorkerLoader
     services.get_module_logger = get-module-logger
     WorkerApp = require \./app
     app = self.app = new WorkerApp environment, templated_configs
-    (init-err) <- app.init
+    (init-err, web) <- app.init
     return init-callback init-err if init-err?
     logger = get-module-logger process.argv[1]
-    return init-callback null, app, logger
+    return init-callback null, logger, null, web
 
 
 

@@ -10,7 +10,8 @@ debug = debug \yapps-server:bootstrap
 DELEGATE_EXPORT = (m) ->
   try
     debug "bootstrapping #{m} from #{__dirname}"
-    module.exports = exports = require m
+    bootstrap = require m
+    module.exports = exports = {bootstrap}
     debug "successfully load #{m}"
   catch
     console.error "failed to load #{m.red} from #{__dirname.yellow} due to error: #{e}"

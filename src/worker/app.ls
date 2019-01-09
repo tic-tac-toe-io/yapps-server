@@ -19,6 +19,12 @@ BaseApp = require \../common/baseapp
 {STATE_BOOTSTRAPPING, STATE_BOOTSTRAPPED, STATE_READY} = message_states
 
 
+class WebService
+  (@worker, @opts) ->
+    return
+
+
+
 class WorkerApp extends BaseApp
   (@environment, @templated_configs) ->
     super ...
@@ -27,7 +33,8 @@ class WorkerApp extends BaseApp
     self = @
     INFO "init-internally: configs => #{JSON.stringify configs}"
     try
-      done!
+      web = self.web = new WebService configs['web']
+      done null, web
     catch error
       ERR error, "failed to call app's bootstrap callback"
       return process.exit 1

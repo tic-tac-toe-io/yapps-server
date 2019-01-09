@@ -88,8 +88,14 @@ class MasterApp extends BaseApp
 
   init-internally: (environment, configs, done) ->
     {num_of_workers} = self = @
-    self.bootstrap-callback = done
-    self.workers = [ (new Worker self, i) for i from 0 to (num_of_workers-1) ]
+    # self.bootstrap-callback = done
+    # self.workers = [ (new Worker self, i) for i from 0 to (num_of_workers-1) ]
+    hook = self.module-hook = require \./require-hook
+    hook.install!
+    return done!
+
+  add-plugin: (p) ->
+    return
 
   at-child-exit: (index, code, signal) ->
     {workers} = self = @
