@@ -4,14 +4,14 @@
 # https://tic-tac-toe.io
 # Taipei, Taiwan
 #
-require! <[path handlebars]>
+require! <[path handlebars lodash eventemitter2]>
 {services} = global.ys
 {DBG, ERR, WARN, INFO} = services.get_module_logger __filename
 {MERGE_JSON_TEMPLATE} = require \../helpers/utils
 
 
 class AppPlugin
-  (@app, @req, @filepath, @m) ->
+  (@ad, @req, @filepath, @m) ->
     throw new Error "module for plugin shall not be null" unless m?
     throw new Error "m.attach() shall not be null" unless m.attach?
     throw new Error "m.attach() shall be function but #{typeof m.attach}" unless \function is typeof m.attach
@@ -20,22 +20,42 @@ class AppPlugin
     @name = req
     @name = m.name if m.name?
     @name = path.basename path.dirname @name if @name.endsWith "index.js"
+    @name = path.basename @name
     @callee = m
     return
 
   set-callee: (@callee=null) ->
     return @
 
-  to-json: (simple=no) ->
+  to-json: ->
     {req, filepath, name} = self = @
-    return {req, filepath} if simple
     return {req, filepath, name}
 
 
 class AppContext
   (@app) ->
-    @plugins = []
+    {EventEmitter2} = eventemitter2
     @objects = {}
+    @server = new EventEmitter2 do
+      wildcard: yes
+      delimiter: \::
+      newListener: no
+      maxListeners: 20
+    return
+
+  set: (name, o) ->
+    @objects[name] = o
+
+  on: -> return @server.on.apply @server, arguments
+  emit: -> return @server.emit.apply @server, arguments
+  add-listener: -> return @server.add-listener.apply @server, arguments
+  remove-listener: -> return @server.remove-listener.apply @server, arguments
+  restart: (evt) -> return @app.restart evt
+
+
+class AppDelegation
+  (@app, @environment, @configs, @context) ->
+    @plugins = []
     return
 
   init: (done) ->
@@ -47,10 +67,6 @@ class AppContext
       return done error
     return done!
 
-  add: (name, object) ->
-    @objects[name] = object
-    return @
-
   create-plugin: (m) ->
     {hook} = self = @
     result = hook.lookup m
@@ -61,13 +77,12 @@ class AppContext
 
   add-plugin: (p) ->
     @plugins.push p
-    {req} = p
-    INFO "add-plugin: #{req.yellow}"
 
-  to-json: (simple=no) ->
+  to-json: ->
     {plugins} = self = @
-    plugins = [ (p.to-json simple) for p in plugins ]
+    plugins = [ (p.to-json!) for p in plugins ]
     return {plugins}
+
 
 
 
@@ -91,14 +106,8 @@ class BaseApp
   #
   (@environment, @templated_configs) ->
     @context = new AppContext @
+    @delegation = null
     return
-
-  /*
-  add-plugin: (m) ->
-    {context} = self = @
-    p = context.create-plugin m
-    context.add-plugin p
-  */
 
   init-internally: (environment, configs, done) ->
     return done!
@@ -109,12 +118,18 @@ class BaseApp
       self.configs = configs = MERGE_JSON_TEMPLATE templated_configs, environment
     catch error
       return done error
-    (err) <- context.init
+    d = self.delegation = new AppDelegation self, environment, configs, context
+    (err) <- d.init
     return done err if err?
     return self.init-internally environment, configs, done
 
-  start: (done) ->
+  start-internally: (done) ->
     return done!
+
+  start: (done) ->
+    {configs} = self = @
+
+    return @.start-internally done
 
 
 module.exports = exports = {BaseApp, AppContext, AppPlugin}

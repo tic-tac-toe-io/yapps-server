@@ -39,20 +39,20 @@ class WorkerLoader
 
   at-bootstrapping-rsp-conf: (payload) ->
     {init-callback} = self = @
-    {index, environment, templated_configs, master_context} = payload
+    {index, environment, templated_configs, master_settings} = payload
     self.index = index
     self.environment = environment
     debug "index: %o", index
     debug "environment: %o", environment
     debug "templated_configs: %o", templated_configs
-    debug "master_context: %o", master_context
+    debug "master_settings: %o", master_settings
     logger = require \../common/logger
     (logger-err, get-module-logger) <- logger.init index, environment, templated_configs['logger'], {}, {}
     return init-callback logger-err if logger-err?
     {services} = global.ys
     services.get_module_logger = get-module-logger
     WorkerApp = require \./app
-    app = self.app = new WorkerApp environment, templated_configs, master_context
+    app = self.app = new WorkerApp environment, templated_configs, master_settings
     (init-err, web) <- app.init
     return init-callback init-err if init-err?
     logger = get-module-logger process.argv[1]

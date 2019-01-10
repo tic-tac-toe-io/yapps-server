@@ -52,12 +52,12 @@ class Worker
 
   at-bootstrapping-req-configs: (payload) ->
     {master, child, index} = self = @
-    {context} = master
+    {delegation} = master
     templated_configs = lodash.merge {}, master.templated_configs
-    master_context = context.to-json yes
+    master_settings = delegation.to-json yes
     environment = lodash.merge {}, master.environment
     environment['process_name'] = if index < 10 then "w0#{index}" else "w#{index}"
-    child.send create_message STATE_BOOTSTRAPPING, TYPE_BOOTSTRAP_RESPONSE_CONFIGS, {index, environment, templated_configs, master_context}
+    child.send create_message STATE_BOOTSTRAPPING, TYPE_BOOTSTRAP_RESPONSE_CONFIGS, {index, environment, templated_configs, master_settings}
 
   at-bootstrapped: ->
     {master, index} = self = @
@@ -90,16 +90,22 @@ class MasterApp extends BaseApp
   init-internally: (environment, configs, done) ->
     return done!
 
+  start-internally: (done) ->
+    {num_of_workers} = self = @
+    self.start-callback = done
+    self.workers = [ (new Worker self, i) for i from 0 to (num_of_workers-1) ]
+
   add-plugin: (m) ->
-    {context} = self = @
-    p = context.create-plugin m
+    {delegation} = self = @
+    p = delegation.create-plugin m
     mm = m['master']
-    return context.add-plugin p.set-callee! unless mm?
+    INFO "add-plugin: #{p.name.yellow} (master: #{mm?})"
+    return delegation.add-plugin p.set-callee! unless mm?
     throw new Error "add-plugin: m[master].attach() shall not be null" unless mm.attach?
     throw new Error "add-plugin: m[master].attach() shall be function but #{typeof mm.attach}" unless \function is typeof mm.attach
     throw new Error "add-plugin: m[master].init() shall not be null" unless mm.init?
     throw new Error "add-plugin: m[master].init() shall be function but #{typeof mm.init}" unless \function is typeof mm.init
-    return context.add-plugin p.set-callee mm
+    return delegation.add-plugin p.set-callee mm
 
   at-child-exit: (index, code, signal) ->
     {workers} = self = @
@@ -116,11 +122,6 @@ class MasterApp extends BaseApp
 
   at-all-bootstrapped: ->
     return
-
-  start: (done) ->
-    {num_of_workers} = self = @
-    self.start-callback = done
-    self.workers = [ (new Worker self, i) for i from 0 to (num_of_workers-1) ]
 
 
 module.exports = exports = MasterApp

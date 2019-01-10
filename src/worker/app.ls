@@ -29,31 +29,31 @@ class WebService
 
 
 class WorkerApp extends BaseApp
-  (@environment, @templated_configs, @master_context) ->
+  (@environment, @templated_configs, @master_settings) ->
     super environment, templated_configs
 
   init-context: (environment, configs, done) ->
     {context, configs} = self = @
     web = self.web = new WebService self, configs['web']
-    context.add \web, web
+    context.set \web, web
     return done!
 
   init-internally: (environment, configs, done) ->
-    {master_context, context} = self = @
+    {master_settings, delegation} = self = @
     INFO "init-internally: configs => #{JSON.stringify configs}"
     (init-ctx-err) <- self.init-context environment, configs
-    return done init-context-err if init-context-err?
+    return done init-ctx-err if init-ctx-err?
     f = (opts, cb) ->
       try
-        {req, filepath} = opts
-        INFO "loading module #{req.yellow} from #{filepath.green}"
+        {name, req, filepath} = opts
+        INFO "loading module #{name.yellow} from #{filepath.green} (origin: #{req.gray})"
         m = require filepath
-        p = context.create-plugin m
-        context.add-plugin p
+        p = delegation.create-plugin m
+        delegation.add-plugin p
         return cb!
       catch error
         return cb error
-    (init-plugin-err) <- async.eachSeries master_context['plugins'], f
+    (init-plugin-err) <- async.eachSeries master_settings['plugins'], f
     return done init-plugin-err if init-plugin-err?
     return done null, self.web
 
