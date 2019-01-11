@@ -19,12 +19,19 @@ require! <[async]>
 {STATE_BOOTSTRAPPING, STATE_BOOTSTRAPPED, STATE_READY} = message_states
 
 
-class WebService
-  (@worker, @opts) ->
+class WebWrapper
+  (@worker) ->
     return
 
-  start: (done) ->
-    return @worker.start done
+  start: ->
+    {worker, web} = self = @
+    {delegation} = worker
+    (start-err) <- delegation.start
+    return worker.at-start-failed start-err if start-err?
+    {context} = worker
+    (serve-err) <- context['web'].serve
+    return worker.at-start-failed serve-err if serve-err?
+    return worker.at-start-successful!
 
 
 
@@ -32,17 +39,9 @@ class WorkerApp extends BaseApp
   (@environment, @templated_configs, @master_settings) ->
     super environment, templated_configs
 
-  init-context: (environment, configs, done) ->
-    {context, configs} = self = @
-    web = self.web = new WebService self, configs['web']
-    context.set \web, web
-    return done!
-
   init-internally: (environment, configs, done) ->
-    {master_settings, delegation} = self = @
+    {master_settings, delegation, context} = self = @
     INFO "init-internally: configs => #{JSON.stringify configs}"
-    (init-ctx-err) <- self.init-context environment, configs
-    return done init-ctx-err if init-ctx-err?
     f = (opts, cb) ->
       try
         {name, req, filepath} = opts
@@ -55,7 +54,8 @@ class WorkerApp extends BaseApp
         return cb error
     (init-plugin-err) <- async.eachSeries master_settings['plugins'], f
     return done init-plugin-err if init-plugin-err?
-    done null, self.web
+    ww = self.ww = new WebWrapper self
+    done null, ww
     return process.send create_message STATE_BOOTSTRAPPED
 
   at-message: (message, connection) ->
@@ -68,11 +68,5 @@ class WorkerApp extends BaseApp
   at-start-failed: (err) ->
     ERR err, "failed to start"
     return process.exit 1
-
-  start: ->
-    {delegation} = self = @
-    (err) <- delegation.start
-    return self.at-start-failed err if err?
-    return self.at-start-successful!
 
 module.exports = exports = WorkerApp

@@ -88,6 +88,7 @@ class MasterApp extends BaseApp
     @start-callback = null
 
   init-internally: (environment, configs, done) ->
+    @.add-plugin require \../plugins/web
     return done!
 
   start-internally: (done) ->
