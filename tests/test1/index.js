@@ -49,8 +49,9 @@ ys.bootstrap(opts, (berr, logger, master=null, web=null) => {
         /**
          * Configure master app (load-balancer) here.
          */
-        master.addPlugin(require('./lib/test-plugin1'));
+        master.addPlugin(require('plugin-example'));
         master.addPlugin(require('echo1'));
+        master.addPlugin(require('./lib/test-plugin1'));
         /**
          * Start service in the process of master app.
          */

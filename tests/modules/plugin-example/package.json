@@ -1,0 +1,19 @@
+{
+  "name": "example",
+  "author": {
+    "name": [
+      "Yagamy"
+    ],
+    "email": "yagamy@t2t.io"
+  },
+  "description": "Example for the plugins of yapps-server",
+  "version": "0.1.0",
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "main": "lib/index.js",
+  "dependencies": {},
+  "devDependencies": {},
+  "optionalDependencies": {}
+}

@@ -99,7 +99,7 @@ class MasterApp extends BaseApp
     {delegation} = self = @
     p = delegation.create-plugin m
     mm = m['master']
-    INFO "add-plugin: #{p.name.yellow} (master: #{mm?})"
+    INFO "add-plugin: #{p.name.yellow} (req: #{p.req.red}, master: #{mm?})"
     return delegation.add-plugin p.set-callee! unless mm?
     throw new Error "add-plugin: m[master].attach() shall not be null" unless mm.attach?
     throw new Error "add-plugin: m[master].attach() shall be function but #{typeof mm.attach}" unless \function is typeof mm.attach

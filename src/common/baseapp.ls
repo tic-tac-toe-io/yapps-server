@@ -4,10 +4,33 @@
 # https://tic-tac-toe.io
 # Taipei, Taiwan
 #
-require! <[path handlebars lodash eventemitter2]>
+require! <[path handlebars lodash eventemitter2 debug async]>
 {services} = global.ys
 {DBG, ERR, WARN, INFO} = services.get_module_logger __filename
 {MERGE_JSON_TEMPLATE} = require \../helpers/utils
+debug = debug \yapps-server:common:baseapp
+
+
+DUMMY = (err) ->
+  return
+
+##
+# Inspired by https://github.com/indexzero/node-pkginfo/blob/master/lib/pkginfo.js
+#
+LOAD_PACKAGE_JSON = (app_dir, file_path, dir=null) ->
+  dir = path.dirname file_path unless dir?
+  throw new Error "Could not find package.json up from #{file_path}" if dir is path.dirname dir
+  throw new Error "Could not find package.json until app_dir: #{app_dir} from #{file_path}" if dir is app_dir
+  throw new Error "Cannot find package.json from unspecified directory" unless dir? or dir is \.
+  try
+    p = "#{dir}/package.json"
+    debug "looking for #{p}"
+    json = require p
+  catch error
+    DUMMY error
+  return {p, json} if json?
+  return LOAD_PACKAGE_JSON app_dir, file_path, path.dirname dir
+
 
 
 class AppPlugin
@@ -17,11 +40,29 @@ class AppPlugin
     throw new Error "m.attach() shall be function but #{typeof m.attach}" unless \function is typeof m.attach
     throw new Error "m.init() shall not be null" unless m.init?
     throw new Error "m.init() shall be function but #{typeof m.init}" unless \function is typeof m.init
-    @name = req
-    @name = m.name if m.name?
-    @name = path.basename path.dirname @name if @name.endsWith "index.js"
-    @name = path.basename @name
+    {context} = ad
+    {name} = m
+    if name? and \string is typeof name
+      @name = name
+      DBG "plugin[#{@name}]: name from module.exports.name"
+    else if req isnt '.' and req isnt '..' and req is path.basename req
+      @name = req
+      DBG "plugin[#{@name}]: name from require(name)"
+    else
+      try
+        {p, json} = LOAD_PACKAGE_JSON ad.environment.app_dir, filepath
+        {name} = json
+        @name = name if name? and \string is typeof name
+        @package_json = json
+        DBG "plugin[#{@name}]: name from package.json"
+      catch error
+        @package_json = null
+        @name = req
+        @name = path.basename path.dirname @name if @name.endsWith "index.js"
+        @name = path.basename @name
+        DBG "plugin[#{@name}]: name from dirname(module.id)"
     @callee = m
+    @context = context
     return
 
   set-callee: (@callee=null) ->
@@ -31,12 +72,22 @@ class AppPlugin
     {req, filepath, name} = self = @
     return {req, filepath, name}
 
+  attach: (environment, configs, helpers, context, done) ->
+    {name, callee} = self = @
+    return done! unless callee?
+    {attach} = callee
+    try
+      self.dependencies = attach.apply context, [name, environment, configs, helpers]
+    catch error
+      return done error
+    return done!
+
+
 
 class AppContext
   (@app) ->
     {EventEmitter2} = eventemitter2
-    @objects = {}
-    @server = new EventEmitter2 do
+    @._server = new EventEmitter2 do
       wildcard: yes
       delimiter: \::
       newListener: no
@@ -44,12 +95,12 @@ class AppContext
     return
 
   set: (name, o) ->
-    @objects[name] = o
+    @[name] = o
 
-  on: -> return @server.on.apply @server, arguments
-  emit: -> return @server.emit.apply @server, arguments
-  add-listener: -> return @server.add-listener.apply @server, arguments
-  remove-listener: -> return @server.remove-listener.apply @server, arguments
+  on: -> return @._server.on.apply @._server, arguments
+  emit: -> return @._server.emit.apply @._server, arguments
+  add-listener: -> return @._server.add-listener.apply @._server, arguments
+  remove-listener: -> return @._server.remove-listener.apply @._server, arguments
   restart: (evt) -> return @app.restart evt
 
 
@@ -82,6 +133,12 @@ class AppDelegation
     {plugins} = self = @
     plugins = [ (p.to-json!) for p in plugins ]
     return {plugins}
+
+  attach-plugins: (done) ->
+    {environment, configs, context, plugins} = self = @
+    helpers = {}
+    f = (p, cb) -> return p.attach environment, configs[p.name], helpers, context, cb
+    return async.eachSeries plugins, f, done
 
 
 
@@ -127,9 +184,10 @@ class BaseApp
     return done!
 
   start: (done) ->
-    {configs} = self = @
-
-    return @.start-internally done
+    {delegation} = self = @
+    (attach-err) <- delegation.attach-plugins
+    return done attach-err if attach-err?
+    return self.start-internally done
 
 
 module.exports = exports = {BaseApp, AppContext, AppPlugin}
