@@ -1,4 +1,7 @@
-require! <[colors prettyjson handlebars]>
+require! <[colors prettyjson handlebars path]>
+
+DUMMY = ->
+  return
 
 COLORIZED = (v) ->
   t = typeof v
@@ -34,5 +37,22 @@ MERGE_JSON_TEMPLATE = (json, context) ->
   text = template context
   return JSON.parse text
 
+##
+# Inspired by https://github.com/indexzero/node-pkginfo/blob/master/lib/pkginfo.js
+#
+LOAD_PACKAGE_JSON = (app_dir, file_path, dir=null) ->
+  dir = path.dirname file_path unless dir?
+  throw new Error "Could not find package.json up from #{file_path}" if dir is path.dirname dir
+  throw new Error "Could not find package.json until app_dir: #{app_dir} from #{file_path}" if dir is app_dir
+  throw new Error "Cannot find package.json from unspecified directory" unless dir? or dir is \.
+  try
+    p = "#{dir}/package.json"
+    debug "looking for #{p}"
+    json = require p
+  catch error
+    DUMMY error
+  return {p, json} if json?
+  return LOAD_PACKAGE_JSON app_dir, file_path, path.dirname dir
 
-module.exports = exports = {COLORIZED, PRETTIZE_KVS, PRINT_PRETTY_JSON, MERGE_JSON_TEMPLATE}
+
+module.exports = exports = {DUMMY, COLORIZED, PRETTIZE_KVS, PRINT_PRETTY_JSON, MERGE_JSON_TEMPLATE, LOAD_PACKAGE_JSON}

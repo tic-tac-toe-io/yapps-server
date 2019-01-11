@@ -9,6 +9,7 @@ module.exports = exports = {
         return;
     },
     init: function (p, done) {
+        INFO(`init`);
         return done();
     },
     fini: function (p, done) {

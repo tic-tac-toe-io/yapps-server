@@ -7,30 +7,8 @@
 require! <[path handlebars lodash eventemitter2 debug async]>
 {services} = global.ys
 {DBG, ERR, WARN, INFO} = services.get_module_logger __filename
-{MERGE_JSON_TEMPLATE} = require \../helpers/utils
+{MERGE_JSON_TEMPLATE, LOAD_PACKAGE_JSON} = require \../helpers/utils
 debug = debug \yapps-server:common:baseapp
-
-
-DUMMY = (err) ->
-  return
-
-##
-# Inspired by https://github.com/indexzero/node-pkginfo/blob/master/lib/pkginfo.js
-#
-LOAD_PACKAGE_JSON = (app_dir, file_path, dir=null) ->
-  dir = path.dirname file_path unless dir?
-  throw new Error "Could not find package.json up from #{file_path}" if dir is path.dirname dir
-  throw new Error "Could not find package.json until app_dir: #{app_dir} from #{file_path}" if dir is app_dir
-  throw new Error "Cannot find package.json from unspecified directory" unless dir? or dir is \.
-  try
-    p = "#{dir}/package.json"
-    debug "looking for #{p}"
-    json = require p
-  catch error
-    DUMMY error
-  return {p, json} if json?
-  return LOAD_PACKAGE_JSON app_dir, file_path, path.dirname dir
-
 
 
 class AppPlugin
@@ -72,15 +50,39 @@ class AppPlugin
     {req, filepath, name} = self = @
     return {req, filepath, name}
 
-  attach: (environment, configs, helpers, context, done) ->
+  run-attach: (environment, configs, helpers, context, done) ->
     {name, callee} = self = @
     return done! unless callee?
     {attach} = callee
     try
-      self.dependencies = attach.apply context, [name, environment, configs, helpers]
+      self.dependencies = attach.apply context, [name, environment, configs[name], helpers]
     catch error
       return done error
+    self.dependencies = [self.dependencies] if \string is typeof self.dependencies
+    self.dependencies = [] unless self.dependencies?
     return done!
+
+  run-init: (context, done) ->
+    {name, callee, dependencies} = self = @
+    return done! unless callee?
+    {init} = callee
+    xs = [ x for x in dependencies when not context[x]? ]
+    return done new Error "#{name} depends on #{xs.join ','} but missing" if xs.length > 0
+    callback = -> return done.apply null, arguments
+    try
+      return init.apply context, [context[name], callback]
+    catch error
+      return done error
+
+  run-fini: (context, done) ->
+    {name, callee} = self = @
+    return done! unless callee?
+    {fini} = callee
+    callback = -> return done.apply null, arguments
+    try
+      return fini.apply context, [context[name], callback]
+    catch error
+      return done error
 
 
 
@@ -134,12 +136,41 @@ class AppDelegation
     plugins = [ (p.to-json!) for p in plugins ]
     return {plugins}
 
-  attach-plugins: (done) ->
+  attach-all-plugins: (done) ->
     {environment, configs, context, plugins} = self = @
     helpers = {}
-    f = (p, cb) -> return p.attach environment, configs[p.name], helpers, context, cb
+    f = (p, cb) -> return p.run-attach environment, configs, helpers, context, cb
     return async.eachSeries plugins, f, done
 
+  init-all-plugins: (done) ->
+    {context, plugins} = self = @
+    DBG "#{plugins.length} plugins to be initialized"
+    g = (p, cb) ->
+      try
+        return p.run-init context, cb
+      catch error
+        return cb error
+    return async.eachSeries plugins, g, done
+
+  fini-all-plugins: (done) ->
+    {context, plugins} = self = @
+    DBG "#{plugins.length} plugins to be finalized"
+    h = (p, cb) ->
+      try
+        return p.run-fini context, cb
+      catch error
+        return cb error
+    return async.eachSeries plugins, g, done
+
+  start: (done) ->
+    {plugins} = self = @
+    (attach-err) <- self.attach-all-plugins
+    return done attach-err if attach-err?
+    DBG "#{plugins.length} plugins are attached"
+    (init-err) <- self.init-all-plugins
+    return done init-err if init-err?
+    DBG "#{plugins.length} plugins are initialized"
+    return done!
 
 
 
@@ -179,15 +210,6 @@ class BaseApp
     (err) <- d.init
     return done err if err?
     return self.init-internally environment, configs, done
-
-  start-internally: (done) ->
-    return done!
-
-  start: (done) ->
-    {delegation} = self = @
-    (attach-err) <- delegation.attach-plugins
-    return done attach-err if attach-err?
-    return self.start-internally done
 
 
 module.exports = exports = {BaseApp, AppContext, AppPlugin}

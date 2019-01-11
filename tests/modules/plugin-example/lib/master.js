@@ -6,9 +6,11 @@ module.exports = exports = {
         INFO(`${name}: environment => ${JSON.stringify(environment)}`);
         INFO(`${name}: configs => ${JSON.stringify(configs)}`);
         INFO(`${name}: helpers => ${JSON.stringify(helpers)}`);
-        return;
+        return ['echo1'];
     },
     init: function (p, done) {
+        var {echo1} = this;
+        INFO(`init, echo1: ${JSON.stringify(echo1)}`);
         return done();
     },
     fini: function (p, done) {

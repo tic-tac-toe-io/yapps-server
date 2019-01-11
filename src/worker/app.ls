@@ -55,12 +55,24 @@ class WorkerApp extends BaseApp
         return cb error
     (init-plugin-err) <- async.eachSeries master_settings['plugins'], f
     return done init-plugin-err if init-plugin-err?
-    return done null, self.web
+    done null, self.web
+    return process.send create_message STATE_BOOTSTRAPPED
 
   at-message: (message, connection) ->
     return
 
-  start: (done) ->
-    return process.send create_message STATE_BOOTSTRAPPED
+  at-start-successful: ->
+    INFO "READY".cyan
+    return process.send create_message STATE_READY
+
+  at-start-failed: (err) ->
+    ERR err, "failed to start"
+    return process.exit 1
+
+  start: ->
+    {delegation} = self = @
+    (err) <- delegation.start
+    return self.at-start-failed err if err?
+    return self.at-start-successful!
 
 module.exports = exports = WorkerApp

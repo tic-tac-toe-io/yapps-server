@@ -123,5 +123,10 @@ class MasterApp extends BaseApp
   at-all-bootstrapped: ->
     return
 
+  start: (done) ->
+    {delegation} = self = @
+    (start-err) <- delegation.start
+    return done start-err if start-err?
+    return self.start-internally done
 
 module.exports = exports = MasterApp

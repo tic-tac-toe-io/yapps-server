@@ -84,6 +84,7 @@ module.exports = exports = {
      * @param {*} done the callback function to indicate the finalization of plugin is successful or failed.
      */
     fini: function (p, done) {
+        INFO(`init`);
         return done();
     },
 
