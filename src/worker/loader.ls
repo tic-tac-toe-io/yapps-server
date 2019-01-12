@@ -30,7 +30,7 @@ class WorkerLoader
   at-message: (message, connection) ->
     {index, app, ready} = self = @
     debug "got-a-message: %o", message
-    return app.at-message message, connection if ready and app?
+    return app.at-message message, connection if app? and app.ready
     {state, type, payload} = message
     return self.at-bootstrapping-message type, payload if state is STATE_BOOTSTRAPPING
 

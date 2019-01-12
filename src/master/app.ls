@@ -15,7 +15,7 @@ require! <[async lodash]>
 
 {BaseApp} = require \../common/baseapp
 {create_message, message_states, message_types} = require \../common/message
-{STATE_BOOTSTRAPPING, STATE_BOOTSTRAPPED, STATE_READY} = message_states
+{STATE_BOOTSTRAPPING, STATE_BOOTSTRAPPED, STATE_READY, STATE_RUNNING} = message_states
 {TYPE_BOOTSTRAP_REQUEST_CONFIGS, TYPE_BOOTSTRAP_RESPONSE_CONFIGS} = message_types
 
 
@@ -33,6 +33,11 @@ class Worker
     INFO "#{prefix}: created, but not ready"
     return
 
+  dispatch-connection: (type, c) ->
+    {child} = self = @
+    INFO "dispatch-connection: STATE_RUNNING, #{type}"
+    return child.send (create_message STATE_RUNNING, type), c
+
   at-exit: (code, signal) ->
     {child, master, index, prefix} = self = @
     child.removeAllListeners \exit
@@ -46,6 +51,7 @@ class Worker
     {state, type, payload} = message
     return self.at-bootstrapped! if state is STATE_BOOTSTRAPPED
     return self.at-bootstrapping-message type, payload if state is STATE_BOOTSTRAPPING
+    return self.at-ready! if state is STATE_READY
 
   at-bootstrapping-message: (type, payload) ->
     return @.at-bootstrapping-req-configs payload if type is TYPE_BOOTSTRAP_REQUEST_CONFIGS
@@ -63,6 +69,13 @@ class Worker
     {master, index} = self = @
     self.bootstrapped = yes
     master.at-bootstrapped self, index
+
+  at-ready: ->
+    {master, index, ready} = self = @
+    return if ready
+    self.ready = yes
+    master.at-ready self, index
+
 
 
 class MasterApp extends BaseApp
@@ -84,17 +97,12 @@ class MasterApp extends BaseApp
     super environment, templated_configs
     @workers = []
     @bootstrapped = no
-    @started = no
+    @ready = no
     @start-callback = null
 
   init-internally: (environment, configs, done) ->
     @.add-plugin require \../plugins/web
     return done!
-
-  start-internally: (done) ->
-    {num_of_workers} = self = @
-    self.start-callback = done
-    self.workers = [ (new Worker self, i) for i from 0 to (num_of_workers-1) ]
 
   add-plugin: (m) ->
     {delegation} = self = @
@@ -121,13 +129,32 @@ class MasterApp extends BaseApp
     self.bootstrapped = yes
     return self.at-all-bootstrapped!
 
+  at-ready: (worker, index) ->
+    {workers, ready} = self = @
+    return if ready
+    xs = [ (if w.ready then 1 else 0) for w in workers ]
+    xs = lodash.sum xs
+    return unless xs is workers.length
+    self.ready = yes
+    return self.at-all-ready!
+
   at-all-bootstrapped: ->
     return
 
+  at-all-ready: ->
+    {workers, context, start-callback} = self = @
+    balancer = context['web']
+    balancer.set-workers workers
+    (err) <- balancer.serve
+    return start-callback err if err?
+    return start-callback!
+
   start: (done) ->
-    {delegation} = self = @
+    {delegation, num_of_workers} = self = @
     (start-err) <- delegation.start
     return done start-err if start-err?
-    return self.start-internally done
+    self.start-callback = done
+    self.workers = [ (new Worker self, i) for i from 0 to (num_of_workers-1) ]
+    return
 
 module.exports = exports = MasterApp

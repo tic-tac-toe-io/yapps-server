@@ -16,7 +16,8 @@ require! <[async]>
 {COLORIZED, PRETTIZE_KVS, PRINT_PRETTY_JSON, MERGE_JSON_TEMPLATE} = require \../helpers/utils
 {BaseApp} = require \../common/baseapp
 {create_message, message_states, message_types} = require \../common/message
-{STATE_BOOTSTRAPPING, STATE_BOOTSTRAPPED, STATE_READY} = message_states
+{STATE_BOOTSTRAPPING, STATE_BOOTSTRAPPED, STATE_READY, STATE_RUNNING} = message_states
+{TYPE_RUNNING_WEB_CONNECTION_DISPATCH} = message_types
 
 
 class WebWrapper
@@ -24,20 +25,26 @@ class WebWrapper
     return
 
   start: ->
-    {worker, web} = self = @
+    {worker} = self = @
     {delegation} = worker
     (start-err) <- delegation.start
     return worker.at-start-failed start-err if start-err?
     {context} = worker
-    (serve-err) <- context['web'].serve
+    web = self.web = context['web']
+    (serve-err) <- web.serve
     return worker.at-start-failed serve-err if serve-err?
     return worker.at-start-successful!
+
+  at-incoming-connection: (c) ->
+    {web} = self = @
+    return web.at-master-incoming-connection c
 
 
 
 class WorkerApp extends BaseApp
   (@environment, @templated_configs, @master_settings) ->
     super environment, templated_configs
+    @ready = no
 
   init-internally: (environment, configs, done) ->
     {master_settings, delegation, context} = self = @
@@ -59,10 +66,17 @@ class WorkerApp extends BaseApp
     return process.send create_message STATE_BOOTSTRAPPED
 
   at-message: (message, connection) ->
-    return
+    self = @
+    {state, type, payload} = message
+    return unless state is STATE_RUNNING
+    return self.at-web-incoming-connection payload, connection if type is TYPE_RUNNING_WEB_CONNECTION_DISPATCH
+
+  at-web-incoming-connection: (payload, connection) ->
+    return @ww.at-incoming-connection connection
 
   at-start-successful: ->
     INFO "READY".cyan
+    @ready = yes
     return process.send create_message STATE_READY
 
   at-start-failed: (err) ->

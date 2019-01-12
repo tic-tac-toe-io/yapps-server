@@ -42,7 +42,8 @@ class ModuleLogger
   debug: -> return @log.debug.apply @log, arguments
 
 
-GET_LOGGER = (filepath) ->
+GET_LOGGER = (filepath=null) ->
+  return {logger: module.logger} unless filepath?
   logger = new ModuleLogger filepath
   produce_func = (logger, level) -> return -> logger[level].apply logger, arguments
   return do

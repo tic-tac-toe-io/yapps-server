@@ -13,6 +13,8 @@ const TYPE_NONE = \none
 const TYPE_BOOTSTRAP_REQUEST_CONFIGS = \req-worker-configs
 const TYPE_BOOTSTRAP_RESPONSE_CONFIGS = \rsp-worker-configs
 
+const TYPE_RUNNING_WEB_CONNECTION_DISPATCH = \web-tcp-dispatch
+
 
 const message_states = {
   STATE_BOOTSTRAPPING,
@@ -22,8 +24,10 @@ const message_states = {
 }
 
 const message_types = {
+  TYPE_NONE,
   TYPE_BOOTSTRAP_REQUEST_CONFIGS,
-  TYPE_BOOTSTRAP_RESPONSE_CONFIGS
+  TYPE_BOOTSTRAP_RESPONSE_CONFIGS,
+  TYPE_RUNNING_WEB_CONNECTION_DISPATCH
 }
 
 create_message = (state, type=TYPE_NONE, payload={}) ->
