@@ -9,7 +9,7 @@ sio = require \socket.io
 {services} = global.ys
 {DBG, ERR, WARN, INFO} = services.get_module_logger __filename
 {logger} = services.get_module_logger! # bunyan instance.
-
+{REST_ERR, REST_DAT} = rest = require \./helpers
 
 FIRST = (req, res, next) ->
   /*
@@ -84,7 +84,7 @@ class LocalWeb
     {web, configs} = self = @
     web = self.web = new express!
     web.set 'trust proxy', true
-    web.use FIRST
+    # web.use FIRST
     web.use body-parser.json!
     web.use body-parser.urlencoded extended: true
     self.init-logger!
@@ -102,10 +102,12 @@ class LocalWeb
   at-master-incoming-connection: (connection) ->
     {server} = self = @
     server.emit \connection, connection
-    connection.on \end, -> INFO "connection endd"
-    connection.on \close, -> INFO "connection closed"
+    # connection.on \end, -> INFO "connection ended"
+    # connection.on \close, -> INFO "connection closed"
     connection.resume!
 
+  get_rest_helpers: ->
+    return rest
 
 
 module.exports = exports =

@@ -35,7 +35,7 @@ class Worker
 
   dispatch-connection: (type, c) ->
     {child} = self = @
-    INFO "dispatch-connection: STATE_RUNNING, #{type}"
+    DBG "dispatch-connection: STATE_RUNNING, #{type}"
     return child.send (create_message STATE_RUNNING, type), c
 
   at-exit: (code, signal) ->

@@ -32,6 +32,7 @@ class TcpBalancer
     self.counter = counter + 1
     index = counter % workers.length
     INFO "port:#{port} => incoming tcp connection, dispatch to workers[#{index}]"
+    /*
     {localAddress, localPort, remoteAddress, remotePort, remoteFamily} = c
     INFO "localAddress: #{localAddress}"
     INFO "localPort: #{localPort}"
@@ -40,6 +41,7 @@ class TcpBalancer
     INFO "remoteFamily: #{remoteFamily}"
     c.on \close, ->
       INFO "port:#{port}, connection closed"
+    */
     return workers[index].dispatch-connection TYPE_RUNNING_WEB_CONNECTION_DISPATCH, c
 
   serve: (done) ->

@@ -11,10 +11,16 @@ module.exports = exports = {
     },
     init: function (p, done) {
         var {web} = this;
+        var {REST_ERR, REST_DAT} = web.get_rest_helpers();
         var echo = new express();
         echo.get('/', (req, res) => {
-            var {query, headers} = req;
-            res.json({query, headers});
+            var {query, headers, socket, ip} = req;
+            var {localAddress, localPort, remoteAddress, remotePort, remoteFamily} = socket;
+            var socket = {localAddress, localPort, remoteAddress, remotePort, remoteFamily};
+            return REST_DAT(req, res, {query, headers, socket, ip});
+        });
+        echo.post('/', (req, res) => {
+            return REST_ERR(req, res, 'resource_not_implemented');
         });
         web.useApi('echo', echo);
         return done();
