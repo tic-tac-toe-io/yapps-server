@@ -40,19 +40,27 @@ repository:
 main: \index.js
 
 dependencies:
-  yargs: \*
-  colors: \*
-  rc: \*
-  mkdirp: \*
-  bunyan: \*
-  \moment-timezone : \*
-  \bunyan-rotating-file-stream : \*
-  \bunyan-debug-stream : \*
-  lodash: \*
   livescript: \1.5.0
+  colors: \*
+  debug: \*
+  yargs: \*
+  minimist: \*
+  rc: \*
   \js-yaml : \*
+  mkdirp: \*
+  async: \*
+  lodash: \*
+  eventemitter2: \*
+  handlebars: \*
+
+  bunyan : \*
+  \bunyan-debug-stream : \*
+  \bunyan-rotating-file-stream : \*
+
   express: \*
-  \socket.io : \*
+  \express-bunyan-logger : \*
+  \body-parser : \*
+  \socket.io :\*
 
 devDependencies: {}
 

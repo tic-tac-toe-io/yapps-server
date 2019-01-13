@@ -1,0 +1,39 @@
+{
+  "name": "yapps-server",
+  "author": {
+    "name": [
+      "Yagamy"
+    ],
+    "email": "yagamy@t2t.io"
+  },
+  "description": "Server framework for TIC applications",
+  "version": "0.1.0",
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "main": "index.js",
+  "dependencies": {
+    "livescript": "1.5.0",
+    "colors": "*",
+    "debug": "*",
+    "yargs": "*",
+    "minimist": "*",
+    "rc": "*",
+    "js-yaml": "*",
+    "mkdirp": "*",
+    "async": "*",
+    "lodash": "*",
+    "eventemitter2": "*",
+    "handlebars": "*",
+    "bunyan": "*",
+    "bunyan-debug-stream": "*",
+    "bunyan-rotating-file-stream": "*",
+    "express": "*",
+    "express-bunyan-logger": "*",
+    "body-parser": "*",
+    "socket.io": "*"
+  },
+  "devDependencies": {},
+  "optionalDependencies": {}
+}
