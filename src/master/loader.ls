@@ -104,6 +104,7 @@ class MasterLoader
     delete templated_configs['_']
     debug "templated_configs from %s", filepath
     debug "templated_configs: %o", templated_configs
+    PRINT_PRETTY_JSON \configs, templated_configs
 
   init_env: (work_dir=null, log_dir=null)->
     self = @

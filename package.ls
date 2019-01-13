@@ -42,6 +42,7 @@ main: \index.js
 dependencies:
   livescript: \1.5.0
   colors: \*
+  prettyjson: \*
   debug: \*
   yargs: \*
   minimist: \*

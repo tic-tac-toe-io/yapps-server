@@ -21,7 +21,6 @@ class TcpBalancer
 
   init: (done) ->
     {configs} = self = @
-    INFO "initialized..."
     return done!
 
   set-workers: (@workers) ->
@@ -49,7 +48,8 @@ class TcpBalancer
     pauseOnConnect = yes
     server = self.server = net.createServer {pauseOnConnect}, (c) -> return self.at-incoming-connection c
     server.on \listening, ->
-      INFO "listening port number #{port}"
+      p = port.toString!
+      INFO "listening port number #{p.magenta}"
       return done!
     server.listen port
 
@@ -61,7 +61,6 @@ module.exports = exports =
   name: \web
 
   attach: (name, environment, configs, helpers) ->
-    INFO "name: #{name}"
     @[name] = new TcpBalancer environment, configs, helpers
 
   init: (p, done) ->

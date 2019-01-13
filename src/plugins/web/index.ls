@@ -77,7 +77,6 @@ class LocalWeb
 
   init: (done) ->
     {configs} = self = @
-    INFO "initialized..."
     return done!
 
   serve: (done) ->
@@ -89,7 +88,6 @@ class LocalWeb
     web.use body-parser.urlencoded extended: true
     self.init-logger!
     self.initiate-plugin-api-endpoints!
-    INFO "serve."
     server = self.server = web.listen 0, \0.0.0.0, ->
       INFO "listening 0.0.0.0:0"
       return done!
@@ -114,7 +112,6 @@ module.exports = exports =
   name: \web
 
   attach: (name, environment, configs, helpers) ->
-    INFO "name: #{name}"
     @[name] = new LocalWeb environment, configs, helpers
 
   init: (p, done) ->

@@ -14,8 +14,12 @@ const DEFAULT_PREFIXERS =
   \base : (base) ->
     {process_name, source_type, filename} = base
     source_type = lodash.padEnd source_type, 12
-    # filename = lodash.padEnd filename, 28
-    return "#{process_name.cyan}:#{source_type}:#{filename.gray}"
+    filename = lodash.padEnd filename, 30
+    if source_type is \yapps-server
+      source_type = source_type.blue
+      filename = filename.gray
+    process_name = if \mst is process_name then process_name.red else process_name.cyan
+    return "#{process_name}:#{source_type}:#{filename}"
 
 
 class ModuleLogger
@@ -23,7 +27,11 @@ class ModuleLogger
     {index, environment, logger} = module
     {process_name, app_dir} = environment
     dir = path.dirname path.dirname __dirname
-    if filepath.startsWith app_dir
+    exdir = "#{app_dir}/externals/yapps-server"
+    if filepath.startsWith exdir
+      source_type = "yapps-server"
+      filename = filepath.substring exdir.length
+    else if filepath.startsWith app_dir
       source_type = "--app--"
       filename = filepath.substring app_dir.length
       # filename = filename.substring 1 if filename.startsWith "/"

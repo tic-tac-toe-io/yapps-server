@@ -17,7 +17,7 @@ class ErrorTemplate
     @code = code
     @message = message
     @template = handlebars.compile message
-    INFO "creating error-template for #{name.yellow}"
+    DBG "creating error-template for #{name.yellow}"
 
   produce: (url, context) ->
     {template, name, code, status} = self = @
@@ -31,7 +31,7 @@ class ResponseComposer
   (@errors) ->
     self = @
     self.templates = { [name, (new ErrorTemplate self, name, fields)] for name, fields of errors }
-    INFO "errors: #{JSON.stringify errors}"
+    DBG "errors: #{JSON.stringify errors}"
 
   compose-error: (req, res, name, err=null, data=null) ->
     {templates} = self = @

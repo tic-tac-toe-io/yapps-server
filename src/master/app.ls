@@ -47,7 +47,7 @@ class Worker
 
   at-message: (message) ->
     {index, prefix} = self = @
-    INFO "#{prefix}: got-a-message => #{JSON.stringify message}"
+    DBG "#{prefix}: got-a-message => #{JSON.stringify message}"
     {state, type, payload} = message
     return self.at-bootstrapped! if state is STATE_BOOTSTRAPPED
     return self.at-bootstrapping-message type, payload if state is STATE_BOOTSTRAPPING
