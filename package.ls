@@ -60,6 +60,7 @@ dependencies:
 
   express: \*
   \express-bunyan-logger : \*
+  multer: \*
   \body-parser : \*
   \socket.io :\*
 

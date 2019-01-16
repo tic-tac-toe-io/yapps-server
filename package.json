@@ -32,6 +32,7 @@
     "bunyan-rotating-file-stream": "*",
     "express": "*",
     "express-bunyan-logger": "*",
+    "multer": "*",
     "body-parser": "*",
     "socket.io": "*"
   },

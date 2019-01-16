@@ -30,7 +30,7 @@ class TcpBalancer
     {workers, counter, port} = self = @
     self.counter = counter + 1
     index = counter % workers.length
-    INFO "port:#{port} => incoming tcp connection, dispatch to workers[#{index}]"
+    DBG "port:#{port} => incoming tcp connection, dispatch to workers[#{index}]"
     /*
     {localAddress, localPort, remoteAddress, remotePort, remoteFamily} = c
     INFO "localAddress: #{localAddress}"

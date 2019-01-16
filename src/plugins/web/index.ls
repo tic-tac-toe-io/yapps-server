@@ -4,7 +4,7 @@
 # https://tic-tac-toe.io
 # Taipei, Taiwan
 #
-require! <[express body-parser express-bunyan-logger]>
+require! <[express body-parser express-bunyan-logger multer mkdirp]>
 sio = require \socket.io
 {services} = global.ys
 {DBG, ERR, WARN, INFO} = services.get_module_logger __filename
@@ -77,7 +77,12 @@ class LocalWeb
 
   init: (done) ->
     {configs} = self = @
-    return done!
+    {upload_storage, upload_path} = configs
+    opts = if \memory is upload_storage then {storage: multer.memoryStorage!} else {dest: upload_path}
+    upload = self.upload = multer opts
+    return done! if \memory is upload_storage
+    INFO "creating upload directory: #{upload_path.yellow}"
+    return mkdirp upload_path, done
 
   serve: (done) ->
     {web, configs} = self = @
@@ -105,7 +110,10 @@ class LocalWeb
     connection.resume!
 
   get_rest_helpers: ->
-    return rest
+    {upload} = self = @
+    {REST_ERR, REST_DAT} = rest
+    UPLOAD = upload
+    return {REST_ERR, REST_DAT, UPLOAD}
 
 
 module.exports = exports =
