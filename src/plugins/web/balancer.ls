@@ -45,6 +45,11 @@ class TcpBalancer
 
   serve: (done) ->
     {port} = self = @
+    #
+    # Inspired by these articles:
+    #   - https://stackoverflow.com/questions/38593154/pass-connections-with-https-using-pauseonconnect
+    #   - https://github.com/elad/node-cluster-socket.io
+    #
     pauseOnConnect = yes
     server = self.server = net.createServer {pauseOnConnect}, (c) -> return self.at-incoming-connection c
     server.on \listening, ->

@@ -54,8 +54,11 @@ class AppPlugin
     {name, callee} = self = @
     return done! unless callee?
     {attach} = callee
+    c = configs[name]
+    WARN "plugin[#{@name}]: missing configuration from YAML" unless c?
+    c = {} unless c?
     try
-      self.dependencies = attach.apply context, [name, environment, configs[name], helpers]
+      self.dependencies = attach.apply context, [name, environment, c, helpers]
     catch error
       return done error
     self.dependencies = [self.dependencies] if \string is typeof self.dependencies
