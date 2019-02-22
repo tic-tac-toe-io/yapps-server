@@ -7,7 +7,7 @@
 require! <[path handlebars lodash eventemitter2 debug async]>
 {services} = global.ys
 {DBG, ERR, WARN, INFO} = services.get_module_logger __filename
-{MERGE_JSON_TEMPLATE, LOAD_PACKAGE_JSON} = require \../helpers/utils
+{MERGE_JSON_TEMPLATE, LOAD_PACKAGE_JSON} = HELPERS = require \../helpers/utils
 debug = debug \yapps-server:common:baseapp
 
 
@@ -141,8 +141,7 @@ class AppDelegation
 
   attach-all-plugins: (done) ->
     {environment, configs, context, plugins} = self = @
-    helpers = {}
-    f = (p, cb) -> return p.run-attach environment, configs, helpers, context, cb
+    f = (p, cb) -> return p.run-attach environment, configs, HELPERS, context, cb
     return async.eachSeries plugins, f, done
 
   init-all-plugins: (done) ->

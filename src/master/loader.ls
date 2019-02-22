@@ -68,6 +68,14 @@ YAML_PARSE = (document) ->
   return js-yaml.safe-load document
 
 
+APPLY_BOOLEAN = (xs) ->
+  for key, value of xs
+    xs[key] = yes if value is \true
+    xs[key] = no if value is \false
+    APPLY_BOOLEAN value if \object is typeof value
+
+
+
 class MasterLoader
   (@opts) ->
     self = @
@@ -93,6 +101,7 @@ class MasterLoader
     debug "defaults: %o", defaults
     overrides = minimist args
     delete overrides['_']
+    APPLY_BOOLEAN overrides
     debug "overrides: %o", overrides
     rcargs = if config? then ["--config", config] else []
     rcargs = minimist rcargs
