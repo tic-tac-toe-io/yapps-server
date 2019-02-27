@@ -7,7 +7,7 @@
 
 # ---- MASTER ----
 #
-require! <[path]>
+require! <[path fs]>
 require! <[colors rc debug js-yaml minimist lodash yargs]>
 {COLORIZED, PRETTIZE_KVS, PRINT_PRETTY_JSON} = require \../helpers/utils
 
@@ -80,9 +80,8 @@ class MasterLoader
   (@opts) ->
     self = @
     self.init_env!
-    self.init_cmdline_args!
 
-  init_cmdline_args: ->
+  init_cmdline_args: (done) ->
     self = @
     debug "process:argv %o", process.argv
     {workers, config, verbose} = argv
@@ -97,6 +96,9 @@ class MasterLoader
     self.num_of_workers = num = parseInt workers
     throw new Error "invalid worker option: #{workers}" if num === NaN
     debug "num_of_workers: %d", num
+    (stats-err, stats) <- fs.stat config
+    return done stats-err if stats-err?
+    return done "expect #{config} as regular file but not" unless stats.isFile!
     defaults = require \../common/defaults
     debug "defaults: %o", defaults
     overrides = minimist args
@@ -114,6 +116,7 @@ class MasterLoader
     debug "templated_configs from %s", filepath
     debug "templated_configs: %o", templated_configs
     PRINT_PRETTY_JSON \configs, templated_configs
+    return done!
 
   init_env: (work_dir=null, log_dir=null)->
     self = @
@@ -136,6 +139,8 @@ class MasterLoader
 
   init: (done) ->
     {environment, templated_configs, num_of_workers, verbose} = self = @
+    (cmdline-err) <- self.init_cmdline_args
+    return done cmdline-err if cmdline-err?
     logger = require \../common/logger
     (logger-err, get-module-logger) <- logger.init -1, environment, templated_configs['logger'], {}, {}
     return done logger-err if logger-err?
