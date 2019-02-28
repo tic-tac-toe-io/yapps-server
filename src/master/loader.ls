@@ -79,7 +79,26 @@ APPLY_BOOLEAN = (xs) ->
 class MasterLoader
   (@opts) ->
     self = @
-    self.init_env!
+    self.prepare_env!
+
+  prepare_env: (work_dir=null, log_dir=null) ->
+    self = @
+    entry = path.basename process.argv[1]
+    debug "entry: %o", entry
+    process_name = "mst"
+    debug "app_name: %o", app_name
+    work_dir = "#{app_dir}/work" unless work_dir?
+    logs_dir = "#{app_dir}/logs" unless logs_dir?
+    now = new Date!
+    year = now.getFullYear!
+    month = now.getMonth! + 1
+    debug "year: %d", year
+    debug "month: %d", month
+    month = if month < 10 then "0#{month}" else month.toString!
+    startup_time = "#{year}#{month}"
+    environment = self.environment = {app_name, process_name, app_dir, work_dir, logs_dir, startup_time}
+    debug "environment: %o", environment
+    return environment
 
   init_cmdline_args: (done) ->
     self = @
@@ -107,7 +126,6 @@ class MasterLoader
     debug "overrides: %o", overrides
     rcargs = if config? then ["--config", config] else []
     rcargs = minimist rcargs
-    debug "rcargs: %o", rcargs
     self.templated_configs = templated_configs = lodash.merge {}, (rc app_name, defaults, rcargs, YAML_PARSE), overrides
     filepath = templated_configs['config']
     delete templated_configs['config']
@@ -118,30 +136,13 @@ class MasterLoader
     PRINT_PRETTY_JSON \configs, templated_configs
     return done!
 
-  init_env: (work_dir=null, log_dir=null)->
-    self = @
-    entry = path.basename process.argv[1]
-    debug "entry: %o", entry
-    process_name = "mst"
-    debug "app_name: %o", app_name
-    work_dir = "#{app_dir}/work" unless work_dir?
-    logs_dir = "#{app_dir}/logs" unless logs_dir?
-    now = new Date!
-    year = now.getFullYear!
-    month = now.getMonth! + 1
-    debug "year: %d", year
-    debug "month: %d", month
-    month = if month < 10 then "0#{month}" else month.toString!
-    startup_time = "#{year}#{month}"
-    environment = self.environment = {app_name, process_name, app_dir, work_dir, logs_dir, startup_time}
-    debug "environment: %o", environment
-    return environment
-
   init: (done) ->
-    {environment, templated_configs, num_of_workers, verbose} = self = @
+    self = @
     (cmdline-err) <- self.init_cmdline_args
     return done cmdline-err if cmdline-err?
+    {environment, templated_configs, num_of_workers, verbose} = self
     logger = require \../common/logger
+    debug "templated_configs['logger']: %o", templated_configs['logger']
     (logger-err, get-module-logger) <- logger.init -1, environment, templated_configs['logger'], {}, {}
     return done logger-err if logger-err?
     {services} = global.ys
