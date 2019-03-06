@@ -1,18 +1,22 @@
 {
-  "name": "yapps-server",
+  "name": "@tic-tac-toe/yapps-server",
   "author": {
     "name": [
       "Yagamy"
     ],
     "email": "yagamy@t2t.io"
   },
-  "description": "Server framework for TIC applications",
-  "version": "0.1.0",
+  "description": "Server framework for TIC server applications",
+  "version": "0.1.3",
   "repository": {
     "type": "git",
     "url": ""
   },
   "main": "index.js",
+  "files": [
+    "/src/**/*"
+  ],
+  "license": "MIT",
   "dependencies": {
     "livescript": "1.5.0",
     "colors": "*",

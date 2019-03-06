@@ -23,21 +23,27 @@
 
 # package.json
 #
-name: \yapps-server
+name: \@tic-tac-toe/yapps-server
 
 author:
   name: ['Yagamy']
   email: 'yagamy@t2t.io'
 
-description: 'Server framework for TIC applications'
+description: 'Server framework for TIC server applications'
 
-version: \0.1.0
+version: \x.x.x
 
 repository:
   type: \git
   url: ''
 
 main: \index.js
+
+files: <[
+  /src/**/*
+  ]>
+
+license: \MIT
 
 dependencies:
   livescript: \1.5.0
