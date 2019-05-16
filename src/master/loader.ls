@@ -7,7 +7,7 @@
 
 # ---- MASTER ----
 #
-require! <[path fs]>
+require! <[path fs os]>
 require! <[colors rc debug js-yaml minimist lodash yargs]>
 {COLORIZED, PRETTIZE_KVS, PRINT_PRETTY_JSON} = require \../helpers/utils
 
@@ -75,6 +75,12 @@ APPLY_BOOLEAN = (xs) ->
     APPLY_BOOLEAN value if \object is typeof value
 
 
+GENERATE_INSTANCE_ID = ->
+  hostname = os.hostname!
+  uptime = (new Date!) - Math.floor process.uptime! * 1000
+  pid = process.pid # using the pid of master process to produce `instance_id`
+  return "#{hostname.toUpperCase!}_#{pid}_#{uptime}"
+
 
 class MasterLoader
   (@opts) ->
@@ -85,6 +91,7 @@ class MasterLoader
     self = @
     entry = path.basename process.argv[1]
     debug "entry: %o", entry
+    service_instance_id = GENERATE_INSTANCE_ID!
     process_name = "mst"
     debug "app_name: %o", app_name
     work_dir = "#{app_dir}/work" unless work_dir?
@@ -96,7 +103,7 @@ class MasterLoader
     debug "month: %d", month
     month = if month < 10 then "0#{month}" else month.toString!
     startup_time = "#{year}#{month}"
-    environment = self.environment = {app_name, process_name, app_dir, work_dir, logs_dir, startup_time}
+    environment = self.environment = {app_name, service_instance_id, process_name, app_dir, work_dir, logs_dir, startup_time}
     debug "environment: %o", environment
     return environment
 

@@ -83,6 +83,7 @@ class MasterApp extends BaseApp
   # environment
   #   - app_name
   #   - process_name
+  #   - service_instance_id
   #   - app_dir
   #   - work_dir
   #   - logs_dir

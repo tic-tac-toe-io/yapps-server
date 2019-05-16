@@ -26,8 +26,8 @@
 name: \@tic-tac-toe/yapps-server
 
 author:
-  name: ['Yagamy']
-  email: 'yagamy@t2t.io'
+  name: \yagamy
+  email: \yagamy@t2t.io
 
 description: 'Server framework for TIC server applications'
 
