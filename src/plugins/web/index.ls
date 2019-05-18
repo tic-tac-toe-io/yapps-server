@@ -6,18 +6,13 @@
 #
 require! <[express body-parser express-bunyan-logger multer mkdirp]>
 sio = require \socket.io
+sioAuth = require \socketio-auth
 {services} = global.ys
 {DBG, ERR, WARN, INFO} = services.get_module_logger __filename
 {logger} = services.get_module_logger! # bunyan instance.
 {REST_ERR, REST_DAT} = rest = require \./helpers
 
 FIRST = (req, res, next) ->
-  /*
-  INFO "req.url: #{req.originalUrl}"
-  INFO "req.ip: #{req.ip}"
-  for k, v of req.headers
-    INFO "req.headers[#{k}] = #{v}"
-  */
   {originalUrl, socket} = req
   {localAddress, localPort, remoteAddress, remotePort, remoteFamily} = socket
   INFO "#{originalUrl} => localAddress: #{localAddress}"
@@ -26,6 +21,40 @@ FIRST = (req, res, next) ->
   INFO "#{originalUrl} => remotePort: #{remotePort}"
   INFO "#{originalUrl} => remoteFamily: #{remoteFamily}"
   next!
+
+const AUTHENTICATE_CALLBACK_FUNCTION = 1
+const AUTHENTICATE_USER_OBJECT = 2
+const AUTHENTICATE_EXTERNAL_JS_MODULE = 3
+
+
+class SocketioAuthenticator
+  (@namespace, opts) ->
+    o = typeof opts
+    INFO "ws[#{namespace}] using authenticator with object type => #{o.cyan}"
+    if \function is o
+      @type = AUTHENTICATE_CALLBACK_FUNCTION
+      @func = opts
+    else if \object is o
+      @type = AUTHENTICATE_USER_OBJECT
+      @users = opts
+    else if \string is o
+      @type = AUTHENTICATE_EXTERNAL_JS_MODULE
+      INFO "ws[#{namespace.yellow}] loading external js as authenticator"
+      @func = require opts
+    else
+      throw new Error "ws[#{namespace}] unsupported authenticator opts"
+
+  verify-by-func: (s, username, password, done) ->
+    return @func s, username, password, done
+  
+  verify: (s, username, password, done) ->
+    {namespace, users, type} = self = @
+    INFO "ws[#{namespace}]: verify user #{username.yellow} with password #{password.red}, in type #{type}"
+    return self.verify-by-func s, username, password, done if type isnt AUTHENTICATE_USER_OBJECT
+    p = users[username]
+    return done new Error "no such user #{username}" unless p?
+    return done null, p is password
+
 
 class LocalWeb
   (@environment, @configs, @helpers) ->
@@ -41,8 +70,8 @@ class LocalWeb
   use: (name, middleware) ->
     @routes_general[name] = middleware
 
-  use-ws: (name, handler) ->
-    @wss_namespaces[name] = handler
+  use-ws: (name, handler, authenticator=null) ->
+    @wss_namespaces[name] = {handler, authenticator}
 
   use-api: (name, middleware, version=null) ->
     {route_api_default, routes_api} = self = @
@@ -75,6 +104,22 @@ class LocalWeb
       a.use "/#{version}", v
     web.use "/api", a
 
+  initiate-plugin-wss-namespaces: ->
+    {web, io, wss_namespaces} = self = @
+    for let name, callbacks of wss_namespaces
+      {handler, authenticator} = callbacks
+      namespace = io.of name 
+      if authenticator?
+        a = new SocketioAuthenticator name, authenticator
+        post = (s, data) -> return handler s, data.username
+        auth = (s, data, cb) -> return a.verify s, data.username, data.password, cb
+        opts = authenticate: auth, postAuthenticate: post
+        sioAuth namespace, opts
+        INFO "ws: add #{name.yellow} (w/ authentication)"
+      else
+        namespace.on \connection, handler
+        INFO "ws: add #{name.yellow} (w/o authentication)"
+
   init: (done) ->
     {configs} = self = @
     {upload_storage, upload_path} = configs
@@ -92,11 +137,12 @@ class LocalWeb
     web.use body-parser.json!
     web.use body-parser.urlencoded extended: true
     self.init-logger!
-    self.initiate-plugin-api-endpoints!
     server = self.server = web.listen 0, \0.0.0.0, ->
       INFO "listening 0.0.0.0:0"
       return done!
     io = self.io = sio server
+    self.initiate-plugin-api-endpoints!
+    self.initiate-plugin-wss-namespaces!
 
   fini: (done) ->
     INFO "fini."

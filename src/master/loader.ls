@@ -18,6 +18,7 @@ const app_entry = process.argv[1]
 const app_dir = path.dirname app_entry
 const app_name = path.basename app_dir
 const app_entry_short = if app_entry.startsWith cwd then ".#{app_entry.substring cwd.length}" else app_entry
+const app_package_json = require "#{app_dir}/package.json"
 
 const CMD1 = "node #{app_entry_short} -w 2"
 const CMD2 = "node #{app_entry_short} -w $(nproc) -c /etc/#{app_name}/#{app_name}.yml"
@@ -103,7 +104,7 @@ class MasterLoader
     debug "month: %d", month
     month = if month < 10 then "0#{month}" else month.toString!
     startup_time = "#{year}#{month}"
-    environment = self.environment = {app_name, service_instance_id, process_name, app_dir, work_dir, logs_dir, startup_time}
+    environment = self.environment = {app_name, service_instance_id, process_name, app_dir, work_dir, logs_dir, app_package_json, startup_time}
     debug "environment: %o", environment
     return environment
 

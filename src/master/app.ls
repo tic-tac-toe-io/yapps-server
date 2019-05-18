@@ -87,6 +87,7 @@ class MasterApp extends BaseApp
   #   - app_dir
   #   - work_dir
   #   - logs_dir
+  #   - app_package_json
   #   - startup_time
   #
   # templated_configs

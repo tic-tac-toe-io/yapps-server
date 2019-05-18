@@ -68,7 +68,8 @@ dependencies:
   \express-bunyan-logger : \*
   multer: \*
   \body-parser : \*
-  \socket.io :\*
+  \socket.io : \*
+  \socketio-auth :\*
 
 devDependencies: {}
 
