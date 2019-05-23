@@ -30,16 +30,17 @@ const AUTHENTICATE_EXTERNAL_JS_MODULE = 3
 class SocketioAuthenticator
   (@namespace, opts) ->
     o = typeof opts
-    INFO "ws[#{namespace}] using authenticator with object type => #{o.cyan}"
     if \function is o
       @type = AUTHENTICATE_CALLBACK_FUNCTION
       @func = opts
     else if \object is o
       @type = AUTHENTICATE_USER_OBJECT
       @users = opts
+      xs = [k.green for k, v of opts]
+      DBG "ws[#{namespace.yellow}] user objects for authentication => #{xs.join ','}"
     else if \string is o
       @type = AUTHENTICATE_EXTERNAL_JS_MODULE
-      INFO "ws[#{namespace.yellow}] loading external js as authenticator"
+      DBG "ws[#{namespace.yellow}] loading external js as authenticator => #{opts.cyan}"
       @func = require opts
     else
       throw new Error "ws[#{namespace}] unsupported authenticator opts"
@@ -49,10 +50,11 @@ class SocketioAuthenticator
   
   verify: (s, username, password, done) ->
     {namespace, users, type} = self = @
-    INFO "ws[#{namespace}]: verify user #{username.yellow} with password #{password.red}, in type #{type}"
+    DBG "ws[#{namespace}]: verify user #{username.yellow} with password #{password.red}, in type #{type}"
     return self.verify-by-func s, username, password, done if type isnt AUTHENTICATE_USER_OBJECT
     p = users[username]
     return done new Error "no such user #{username}" unless p?
+    DBG "ws[#{namespace}]: user #{username} with p #{p.red}"
     return done null, p is password
 
 
@@ -111,8 +113,12 @@ class LocalWeb
       namespace = io.of name 
       if authenticator?
         a = new SocketioAuthenticator name, authenticator
-        post = (s, data) -> return handler s, data.username
-        auth = (s, data, cb) -> return a.verify s, data.username, data.password, cb
+        post = (s, data) -> 
+          {username} = data
+          s.user = username
+          return handler s, username
+        auth = (s, data, cb) -> 
+          return a.verify s, data.username, data.password, cb
         opts = authenticate: auth, postAuthenticate: post
         sioAuth namespace, opts
         INFO "ws: add #{name.yellow} (w/ authentication)"

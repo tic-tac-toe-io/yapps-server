@@ -1,8 +1,15 @@
 # Changelog
 
 ## [Unreleased]
+
+
+## [0.1.4] - 2019-05-23
 ### Added
 - Generate `service_instance_id` in the environment context
+- Support external authenticator for socket.io namespaces
+
+### Fixed
+- Fix template message of `missing_field` web error
 
 ## [0.1.3] - 2019-03-07
 ### Added

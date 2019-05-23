@@ -14,7 +14,7 @@ const DEFAULT_PREFIXERS =
   \base : (base) ->
     {process_name, source_type, filename} = base
     source_type = lodash.padEnd source_type, 12
-    filename = lodash.padEnd filename, 30
+    filename = lodash.padEnd filename, 32
     if source_type is \yapps-server
       source_type = source_type.blue
       filename = filename.gray
