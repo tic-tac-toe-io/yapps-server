@@ -70,6 +70,7 @@ dependencies:
   \body-parser : \*
   \socket.io : \*
   \socketio-auth :\*
+  \livescript-middleware : \tic-tac-toe-io/livescript-middleware
 
 devDependencies: {}
 

@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [0.1.5] - 2019-05-28
+### Added
+- Support views/html with PUG template engine
+- Support views/javascript with livescript-middleware
+- Suppoer views/css with static resources
 
 ## [0.1.4] - 2019-05-23
 ### Added

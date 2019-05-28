@@ -4,7 +4,8 @@
 # https://tic-tac-toe.io
 # Taipei, Taiwan
 #
-require! <[express body-parser express-bunyan-logger multer mkdirp]>
+require! <[fs express body-parser express-bunyan-logger multer mkdirp pug]>
+livescript-middleware = require \@tic-tac-toe/livescript-middleware
 sio = require \socket.io
 sioAuth = require \socketio-auth
 {services} = global.ys
@@ -134,9 +135,56 @@ class LocalWeb
     return done! if \memory is upload_storage
     INFO "creating upload directory: #{upload_path.yellow}"
     return mkdirp upload_path, done
+  
+  initiate-views: ->
+    {web, environment} = self = @
+    {app_dir} = environment
+    routes = self.routes_general
+    p = "#{app_dir}/assets/views"
+    try
+      s = fs.statSync p
+    catch
+      return INFO "missing #{p.yellow} for views"
+    return unless s? and s.isDirectory!
+    web.set 'view engine', \pug
+    web.set 'views', p
+    INFO "views: using pug template engine with resource directory: #{p.cyan}"
+    for name, mid of routes
+      x = "/#{name}"
+      web.use x, mid
+      mid.set 'view engine', \pug
+      mid.set 'views', p
+      INFO "serving #{x.yellow} for plugin with PUG template engine"
+
+  initiate-static-resources: (name, fullpath) ->
+    {web} = self = @
+    try
+      s = fs.statSync fullpath
+    catch
+      return INFO "missing #{fullpath.yellow} for static directory to serve #{name.red}"
+    return unless s? and s.isDirectory!
+    x = "/#{name}"
+    web.use x, express.static fullpath
+    return INFO "serving #{x.yellow} with #{fullpath.blue}"
+
+  initiate-scripts: ->
+    {web, environment} = self = @
+    {app_dir, work_dir} = environment
+    src = "#{app_dir}/assets/scripts"
+    dest = "#{work_dir}/js"
+    try
+      s = fs.statSync src
+    catch
+      return INFO "missing #{src.yellow} for livescript to serve js"
+    return unless s? and s.isDirectory!
+    x = "/js"
+    web.use livescript-middleware {src, dest}
+    web.use x, express.static dest
+    return INFO "serving #{x.yellow} with livescript middleware (src: #{src.blue}, dest: #{dest.blue}"
 
   serve: (done) ->
-    {web, configs} = self = @
+    {web, configs, environment} = self = @
+    {app_dir} = environment
     web = self.web = new express!
     web.set 'trust proxy', true
     # web.use FIRST
@@ -149,6 +197,11 @@ class LocalWeb
     io = self.io = sio server
     self.initiate-plugin-api-endpoints!
     self.initiate-plugin-wss-namespaces!
+    self.initiate-static-resources \fonts, "#{app_dir}/assets/public/fonts"
+    self.initiate-static-resources \css, "#{app_dir}/assets/public/css"
+    self.initiate-scripts!
+    self.initiate-static-resources \js, "#{app_dir}/assets/public/js"
+    self.initiate-views!
 
   fini: (done) ->
     INFO "fini."
