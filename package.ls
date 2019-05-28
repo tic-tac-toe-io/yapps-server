@@ -68,6 +68,7 @@ dependencies:
   \express-bunyan-logger : \*
   multer: \*
   \body-parser : \*
+  \pug : \*
   \socket.io : \*
   \socketio-auth :\*
   \livescript-middleware : \tic-tac-toe-io/livescript-middleware
