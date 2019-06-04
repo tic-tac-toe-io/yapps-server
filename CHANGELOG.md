@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [0.1.6] - 2019-06-04
+### Changed
+- Replace `@tic-tac-toe/livescript-middleware` with `@tic-tac-toe/browserify-livescript-middleware`
+
 ## [0.1.5] - 2019-05-28
 ### Added
 - Support views/html with PUG template engine

@@ -5,7 +5,7 @@
 # Taipei, Taiwan
 #
 require! <[fs express body-parser express-bunyan-logger multer mkdirp pug]>
-livescript-middleware = require \@tic-tac-toe/livescript-middleware
+browserify-livescript-middleware = require \@tic-tac-toe/browserify-livescript-middleware
 sio = require \socket.io
 sioAuth = require \socketio-auth
 {services} = global.ys
@@ -48,7 +48,7 @@ class SocketioAuthenticator
 
   verify-by-func: (s, username, password, done) ->
     return @func s, username, password, done
-  
+
   verify: (s, username, password, done) ->
     {namespace, users, type} = self = @
     DBG "ws[#{namespace}]: verify user #{username.yellow} with password #{password.red}, in type #{type}"
@@ -111,14 +111,14 @@ class LocalWeb
     {web, io, wss_namespaces} = self = @
     for let name, callbacks of wss_namespaces
       {handler, authenticator} = callbacks
-      namespace = io.of name 
+      namespace = io.of name
       if authenticator?
         a = new SocketioAuthenticator name, authenticator
-        post = (s, data) -> 
+        post = (s, data) ->
           {username} = data
           s.user = username
           return handler s, username
-        auth = (s, data, cb) -> 
+        auth = (s, data, cb) ->
           return a.verify s, data.username, data.password, cb
         opts = authenticate: auth, postAuthenticate: post
         sioAuth namespace, opts
@@ -135,7 +135,7 @@ class LocalWeb
     return done! if \memory is upload_storage
     INFO "creating upload directory: #{upload_path.yellow}"
     return mkdirp upload_path, done
-  
+
   initiate-views: ->
     {web, environment} = self = @
     {app_dir} = environment
@@ -171,16 +171,15 @@ class LocalWeb
     {web, environment} = self = @
     {app_dir, work_dir} = environment
     src = "#{app_dir}/assets/scripts"
-    dest = "#{work_dir}/js"
+    dst = "#{work_dir}/js"
     try
       s = fs.statSync src
     catch
       return INFO "missing #{src.yellow} for livescript to serve js"
     return unless s? and s.isDirectory!
     x = "/js"
-    web.use livescript-middleware {src, dest}
-    web.use x, express.static dest
-    return INFO "serving #{x.yellow} with livescript middleware (src: #{src.blue}, dest: #{dest.blue}"
+    web.use x, browserify-livescript-middleware {src, dst}
+    return INFO "serving #{x.yellow} with livescript middleware (src: #{src.blue}, dest: #{dst.blue}"
 
   serve: (done) ->
     {web, configs, environment} = self = @

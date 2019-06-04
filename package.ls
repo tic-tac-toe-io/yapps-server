@@ -25,9 +25,9 @@
 #
 name: \@tic-tac-toe/yapps-server
 
-author:
-  name: \yagamy
-  email: \yagamy@t2t.io
+author: "yagamy <yagamy@gmail.com> (https://github.com/yagamy4680)"
+
+keywords: <[yapps tic-tac-toe cloud]>
 
 description: 'Server framework for TIC server applications'
 
@@ -46,7 +46,7 @@ files: <[
 license: \MIT
 
 dependencies:
-  livescript: \1.5.0
+  \@tic-tac-toe/browserify-livescript-middleware : \*
   colors: \*
   prettyjson: \*
   debug: \*
@@ -71,7 +71,6 @@ dependencies:
   \pug : \*
   \socket.io : \*
   \socketio-auth :\*
-  \livescript-middleware : \tic-tac-toe-io/livescript-middleware
 
 devDependencies: {}
 
