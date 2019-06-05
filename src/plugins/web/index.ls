@@ -198,8 +198,8 @@ class LocalWeb
     self.initiate-plugin-wss-namespaces!
     self.initiate-static-resources \fonts, "#{app_dir}/assets/public/fonts"
     self.initiate-static-resources \css, "#{app_dir}/assets/public/css"
-    self.initiate-scripts!
     self.initiate-static-resources \js, "#{app_dir}/assets/public/js"
+    self.initiate-scripts!
     self.initiate-views!
 
   fini: (done) ->

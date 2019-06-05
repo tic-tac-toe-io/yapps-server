@@ -46,7 +46,7 @@ files: <[
 license: \MIT
 
 dependencies:
-  \@tic-tac-toe/browserify-livescript-middleware : \*
+  \@tic-tac-toe/browserify-livescript-middleware : \^1.3.0
   colors: \*
   prettyjson: \*
   debug: \*

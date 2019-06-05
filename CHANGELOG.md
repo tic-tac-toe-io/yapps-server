@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [0.1.7] - 2019-06-05
+### Changed
+- Upgrade `browserify-livescript-middleware` to v1.3.0
+
 ## [0.1.6] - 2019-06-04
 ### Changed
 - Replace `@tic-tac-toe/livescript-middleware` with `@tic-tac-toe/browserify-livescript-middleware`
