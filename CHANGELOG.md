@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [0.1.8] - 2019-06-09
+## Added
+- Add "livescript: github:ischenkodv/LiveScript" to package.json in order to fix startup failure due to missing `livescript` in `node_modules` directory
+
 ## [0.1.7] - 2019-06-05
 ### Changed
 - Upgrade `browserify-livescript-middleware` to v1.3.0

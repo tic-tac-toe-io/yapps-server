@@ -46,6 +46,11 @@ files: <[
 license: \MIT
 
 dependencies:
+  livescript: \github:ischenkodv/LiveScript                # install same livescript as `browserify-livescript-middleware` 
+                                                           # in order to make sure `yapps-server/index.js` can successfully
+														   # load livescript module at beginning. (Otherwise, livescript
+														   # module will be installed in the browserify-livescript-middleware/node_modules
+														   # and yapps-server will be failed to startup).
   \@tic-tac-toe/browserify-livescript-middleware : \^1.3.0
   colors: \*
   prettyjson: \*
