@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+## [0.1.9] - 2019-06-10
+### Fixed
+- Workaround: Load `@tic-tac-toe/browserify-livescript-middleware` before requiring `livescript` in order to make sure `livescript` is already loaded ()
+
+### Removed
+- Remove `livescript` from package.json and package.ls
+
+
 ## [0.1.8] - 2019-06-09
 ## Added
 - Add "livescript: github:ischenkodv/LiveScript" to package.json in order to fix startup failure due to missing `livescript` in `node_modules` directory
