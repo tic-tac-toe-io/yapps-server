@@ -19,6 +19,7 @@ const app_dir = path.dirname app_entry
 const app_name = path.basename app_dir
 const app_entry_short = if app_entry.startsWith cwd then ".#{app_entry.substring cwd.length}" else app_entry
 const app_package_json = require "#{app_dir}/package.json"
+const pathes = {cwd, app_entry, app_dir, app_name, app_package_json}
 
 const CMD1 = "node #{app_entry_short} -w 2"
 const CMD2 = "node #{app_entry_short} -w $(nproc) -c /etc/#{app_name}/#{app_name}.yml"
@@ -26,53 +27,71 @@ const CMD3 = "node #{app_entry_short} -w $(nproc) -- --web.port=3000 --web.uploa
 const CMD4 = "DEBUG=yapps-server:* node #{app_entry_short} -w $(nproc)"
 const JSON1 = "{ web: { port: 3001, upload_storage: 'file' } }"
 
-argv = yargs
-  .alias \w, \workers
-  .describe \w, "the number of workers to serve"
-  .alias \c, \config
-  .describe \c, "configuration file to be loaded"
-  .default \c, null
-  .alias \v, \verbose
-  .describe \v, "enable verbose messages"
-  .default \v, no
-  .alias \h, \help
-  .boolean \h
-  .demand <[w]>
-  .help!
-  .epilogue """
-    Examples:
-      1. Run #{app_name.cyan} with 2 worker processes and .#{app_name}rc as config
-          #{CMD1.green}
 
-      2. Run #{app_name.cyan} with all cpu cores, and use a YAML config file in `/etc/#{app_name}`
-          #{CMD2.green}
+const STARTUP_COMMAND =
+  command: \start
+  describe: "startup #{app_name.cyan} server application"
+  builder: (yargs) ->
+    yargs
+      .alias \w, \workers
+      .describe \w, "the number of workers to serve"
+      .alias \c, \config
+      .describe \c, "configuration file to be loaded"
+      .default \c, "#{app_dir}/config/default.yml"
+      .alias \v, \verbose
+      .describe \v, "enable verbose messages"
+      .default \v, no
+      .alias \h, \help
+      .boolean \h
+      .demand <[w]>
+      .help!
+      .epilogue """
+        Examples:
+          1. Run #{app_name.cyan} with 2 worker processes and .#{app_name}rc as config
+              #{CMD1.green}
 
-      3. Run #{app_name.cyan} with all cpu cores, and change web port to 3000.
-          #{CMD3.green}
+          2. Run #{app_name.cyan} with all cpu cores, and use a YAML config file in `/etc/#{app_name}`
+              #{CMD2.green}
 
-      4. Run #{app_name.cyan} with all cpu cores, and enable debug messages for bootstrap phase
-          #{CMD4.green}
+          3. Run #{app_name.cyan} with all cpu cores, and change web port to 3000.
+              #{CMD3.green}
 
-    Please note, Use `--` to stop parsing flags, and treat rest arguments as patches
-    to be applied to the YAML configuration file loaded by the module `rc`. Those
-    patch arguments support dot notation to build an object for applying patch.
-    For example, following startup command:
+          4. Run #{app_name.cyan} with all cpu cores, and enable debug messages for bootstrap phase
+              #{CMD4.green}
 
-      #{CMD3.gray}
+        Please note, Use `--` to stop parsing flags, and treat rest arguments as patches
+        to be applied to the YAML configuration file loaded by the module `rc`. Those
+        patch arguments support dot notation to build an object for applying patch.
+        For example, following startup command:
 
-    It composes a JSON object #{JSON1.yellow}, and patched to the loaded YAML configuration file.
-  """
-  .argv
+          #{CMD3.gray}
+
+        It composes a JSON object #{JSON1.yellow}, and patched to the loaded YAML configuration file.
+      """
+  handler: (argv) ->
+    return debug "handler() => %o", argv
+
+
+argv =
+  yargs
+    .command STARTUP_COMMAND
+    .command ((require \./commands/cfg) pathes)
+    .demandCommand!
+    .wrap 96
+    .help!
+    .argv
+
+debug "argv: %o", argv
 
 
 YAML_PARSE = (document) ->
   return js-yaml.safe-load document
 
 
-APPLY_BOOLEAN = (xs) ->
-  for key, value of xs
-    xs[key] = yes if value is \true
-    xs[key] = no if value is \false
+APPLY_BOOLEAN = (kv) ->
+  for key, value of kv
+    kv[key] = yes if value is \true
+    kv[key] = no if value is \false
     APPLY_BOOLEAN value if \object is typeof value
 
 
@@ -115,6 +134,7 @@ class MasterLoader
     args = argv._  # the arguments after `--`
     debug "cmdline:_: %o", args
     args = [] unless args?
+    args.shift!
     debug "cmdline:workers: %o", workers
     debug "cmdline:config: %o", config
     debug "cmdline:-: %o", argv._

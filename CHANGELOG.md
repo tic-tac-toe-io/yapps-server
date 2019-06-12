@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [0.2.0] - 2019-06-12
+### Changed
+- Breaking: refactorying codes to support CLI commands: `start` and `cfg`
+
 ## [0.1.9] - 2019-06-10
 ### Fixed
 - Workaround: Load `@tic-tac-toe/browserify-livescript-middleware` before requiring `livescript` in order to make sure `livescript` is already loaded ()
