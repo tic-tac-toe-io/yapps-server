@@ -193,7 +193,10 @@ class LocalWeb
     server = self.server = web.listen 0, \0.0.0.0, ->
       INFO "listening 0.0.0.0:0"
       return done!
-    io = self.io = sio server
+    confs = configs.socket_io
+    confs = {} unless confs? and \object is typeof confs
+    INFO "initiate socket.io server with options: #{(JSON.stringify confs).yellow}"
+    io = self.io = sio server, confs
     self.initiate-plugin-api-endpoints!
     self.initiate-plugin-wss-namespaces!
     self.initiate-static-resources \fonts, "#{app_dir}/assets/public/fonts"
