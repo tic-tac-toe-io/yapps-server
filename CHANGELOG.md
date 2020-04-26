@@ -1,6 +1,13 @@
 # Changelog
 
-## [Unreleased]
+All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
+
+### 0.2.1 (2020-04-26)
+
+
+### Features
+
+* **web:** apply socket_io options from the web section of configuration yaml file ([114b171](https://github.com/tic-tac-toe-io/yapps-server/commit/114b1714a5167333d9c6aeef8229fde95ce019cc))
 
 ## [0.2.0] - 2019-06-12
 ### Changed
