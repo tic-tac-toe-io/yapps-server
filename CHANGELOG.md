@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.2](https://github.com/tic-tac-toe-io/yapps-server/compare/v0.2.1...v0.2.2) (2020-04-26)
+
+
+### Bug Fixes
+
+* **npm:** update node module dependencies to latest ([ae3abf0](https://github.com/tic-tac-toe-io/yapps-server/commit/ae3abf06e9c44ac4298ebaaa18ea9f299f1212d6))
+
 ### 0.2.1 (2020-04-26)
 
 
