@@ -85,7 +85,7 @@ debug "argv: %o", argv
 
 
 YAML_PARSE = (document) ->
-  return js-yaml.safe-load document
+  return js-yaml.load document
 
 
 APPLY_BOOLEAN = (kv) ->

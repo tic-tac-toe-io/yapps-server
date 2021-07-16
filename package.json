@@ -25,7 +25,7 @@
     "yargs": "*",
     "minimist": "*",
     "rc": "*",
-    "js-yaml": "*",
+    "js-yaml": "^4.1.0",
     "mkdirp": "^0.5.5",
     "async": "*",
     "lodash": "*",
