@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.4](https://github.com/tic-tac-toe-io/yapps-server/compare/v0.2.3...v0.2.4) (2021-07-16)
+
+
+### Bug Fixes
+
+* **util:** upgrade to js-yaml v4, and replace safeLoad() with load() ([9cc7367](https://github.com/tic-tac-toe-io/yapps-server/commit/9cc7367a194f675a1155f8b200e49f40a0e159a3))
+
 ### [0.2.3](https://github.com/tic-tac-toe-io/yapps-server/compare/v0.2.2...v0.2.3) (2021-07-16)
 
 
