@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.3](https://github.com/tic-tac-toe-io/yapps-server/compare/v0.2.2...v0.2.3) (2021-07-16)
+
+
+### Bug Fixes
+
+* **npm:** lock mkdirp to 0.5.5 for backward compatibility, and use package.json as single source of package manifest to phase out package.ls ([925ac66](https://github.com/tic-tac-toe-io/yapps-server/commit/925ac6601df07b7a90d3a1aac171f4664c5cd878))
+
 ### [0.2.2](https://github.com/tic-tac-toe-io/yapps-server/compare/v0.2.1...v0.2.2) (2020-04-26)
 
 
