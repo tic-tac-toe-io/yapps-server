@@ -39,8 +39,8 @@
     "multer": "*",
     "body-parser": "*",
     "pug": "*",
-    "socket.io": "*",
-    "socketio-auth": "*"
+    "socket.io": "^2.4.0",
+    "socketio-auth": "^0.1.1"
   },
   "devDependencies": {},
   "optionalDependencies": {}
