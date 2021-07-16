@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.5](https://github.com/tic-tac-toe-io/yapps-server/compare/v0.2.4...v0.2.5) (2021-07-16)
+
+
+### Bug Fixes
+
+* **npm:** lock socket.io to v2.4.0 ([2857c5e](https://github.com/tic-tac-toe-io/yapps-server/commit/2857c5ea957efde0dd69397f8d7c0240979c5cb8))
+
 ### [0.2.4](https://github.com/tic-tac-toe-io/yapps-server/compare/v0.2.3...v0.2.4) (2021-07-16)
 
 
