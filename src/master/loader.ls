@@ -14,7 +14,7 @@ require! <[colors rc debug js-yaml minimist lodash yargs]>
 debug = debug \yapps-server:master:loader
 
 const cwd = process.cwd!
-const app_entry = process.argv[1]
+const app_entry = require.main.filename
 const app_dir = path.dirname app_entry
 const app_name = path.basename app_dir
 const app_entry_short = if app_entry.startsWith cwd then ".#{app_entry.substring cwd.length}" else app_entry
