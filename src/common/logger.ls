@@ -84,7 +84,7 @@ module.exports = exports =
     opts.streams.push do
       level: if verbose then \debug else \info
       type: \raw
-      stream: bunyan-debug-stream do
+      stream: bunyan-debug-stream.create do
         out: process.stderr
         basepath: app_dir
         forceColor: yes
