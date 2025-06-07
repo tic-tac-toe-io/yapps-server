@@ -60,3 +60,9 @@ typings/
 
 # next.js build output
 .next
+
+# backup files / directories
+*.bak*
+
+# OS specific
+.DS_Store
