@@ -9,6 +9,7 @@
 #
 require! <[path fs os]>
 require! <[colors rc debug js-yaml minimist lodash yargs]>
+{hideBin} = require \yargs/helpers
 {COLORIZED, PRETTIZE_KVS, PRINT_PRETTY_JSON} = require \../helpers/utils
 
 debug = debug \yapps-server:master:loader
@@ -72,14 +73,16 @@ const STARTUP_COMMAND =
     return debug "handler() => %o", argv
 
 
+const CONFIG_CMD = ((require \./commands/cfg) pathes)
+
 argv =
-  yargs
+  yargs!
     .command STARTUP_COMMAND
-    .command ((require \./commands/cfg) pathes)
+    .command CONFIG_CMD
     .demandCommand!
-    .wrap 96
+    .wrap 120
     .help!
-    .argv
+    .parse hideBin process.argv
 
 debug "argv: %o", argv
 

@@ -40,7 +40,7 @@
     "rc": "*",
     "socket.io": "^4.5.1",
     "socketio-auth": "^0.1.1",
-    "yargs": "*"
+    "yargs": "^18.0.0"
   },
   "devDependencies": {},
   "optionalDependencies": {}
