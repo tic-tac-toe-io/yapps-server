@@ -26,7 +26,6 @@
     "bunyan-rotating-file-stream": "^2.0.2",
     "colors": "*",
     "debug": "*",
-    "eiows": "^3.6.1",
     "eventemitter2": "*",
     "express": "*",
     "express-bunyan-logger": "*",
